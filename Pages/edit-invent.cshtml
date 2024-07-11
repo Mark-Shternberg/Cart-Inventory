@@ -1,0 +1,244 @@
+﻿@page
+@model Cart_Inventory.Pages.edit_inventModel
+@{
+    ViewData["Title"] = "Edit inventarisation";
+}
+
+<div style="text-align:center">
+    <form asp-page-handler="DeleteInventorization" method="post" id="main_form">
+        Select inventory: 
+        <select id="all_invents" name="all_invents">
+            @for (int i = Model.all_invents.Count-1; i>=0;i--)
+            {
+                <option value="@Model.all_invents[i]">@Model.all_invents[i]</option>
+            }
+        </select>
+        <input hidden name="raw_table" type="text" id="raw_table" />
+        <input hidden name="invent_id" type="text" id="invent_id" />
+        @Html.AntiForgeryToken()
+        <button class="btn btn-default" id="edit_invent">Edit</button>
+        <button class="btn btn-delete">Delete</button>
+        <button class="btn btn-save" id="save_invent" style="visibility:hidden;">Save</button>
+    </form>
+</div>
+
+<div id="input_new_cartridge" style="visibility:hidden;">
+    Add new cartridge/module: <input type="text" id="textInput" oninput="onTextInputChanged()" />
+</div>
+
+<table id="Invent_Table" class="table" style="visibility:hidden;">
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Count</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody id="Invent_Table_Body">
+    </tbody>
+</table>
+
+<script>
+    async function onTextInputChanged() {
+        var inputText = document.getElementById("textInput").value;
+
+        // Выполнение AJAX-запроса к серверу
+        const response = await fetch('/edit-invent?handler=OnTextInputChanged', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+            },
+            body: JSON.stringify({ text: inputText })
+        });
+
+        if (response.ok) {
+            const data = await response.json();
+            //var jsonObject = JSON.parse(data);
+            //var name = jsonObject.name;
+
+            var tableBody = document.getElementById("Invent_Table_Body");
+
+            // Очистка текущего содержимого таблицы
+            //var tableBody = document.getElementById("resultTableBody");
+            //tableBody.innerHTML = "";
+
+            // Заполнение таблицы новыми данными
+            data.forEach(item => {
+                updateTable(item.name);
+            });
+        } else {
+            console.error("Failed to fetch data:", response.statusText);
+        }
+    }
+
+    function updateTable(searchText) {
+        // Получаем таблицу по ID
+        var table = document.getElementById("Invent_Table_Body");
+        let found = false;
+
+        var inputText = document.getElementById("textInput");
+
+        // Проходим по всем строкам таблицы, начиная со второй (первая - заголовок)
+        for (let i = 0, row; row = table.rows[i]; i++) {
+            // Получаем значение первой ячейки текущей строки
+            let cellText = row.cells[0].innerText;
+
+            // Проверяем, совпадает ли текст
+            if (cellText === searchText) {
+                // Увеличиваем значение во второй ячейке на 1
+                let countCell = row.cells[1];
+                countCell.innerText = parseInt(countCell.innerText) + 1;
+                found = true;
+                inputText.value = "";
+                updateRawTable();
+                break;
+            }
+        }
+
+        // Если совпадение не найдено, добавляем новую строку
+        if (!found) {
+            let newRow = table.insertRow();
+            let cell1 = newRow.insertCell(0);
+            let cell2 = newRow.insertCell(1);
+            let cell3 = newRow.insertCell(2);
+
+            cell1.innerHTML = searchText;
+            cell2.innerHTML = "1";
+            cell3.innerHTML = `
+                                                <button type="button" class="btn btn-delete" onclick="decrementCount(this)">-</button>
+                                            <button type="button" class="btn btn-save" onclick="incrementCount(this)">+</button>
+                                    `;
+            inputText.value = "";
+            updateRawTable();
+        }
+    }
+
+    document.getElementById("edit_invent").addEventListener("click", async function (event) {
+        event.preventDefault(); // Предотвращаем отправку формы
+
+        var select = document.getElementById("all_invents");
+        var selectedOption = select.options[select.selectedIndex];
+        var invent_id = selectedOption.value;
+
+        try {
+            const response = await fetch('@Url.Page("/edit-invent", new { handler = "LoadEditableInvent" })', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                },
+                body: JSON.stringify({ text: invent_id })
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+
+                // Очистка текущего содержимого таблицы
+                var tableBody = document.getElementById("Invent_Table_Body");
+                tableBody.innerHTML = "";
+
+                // ВКЛЮЧЕНИЕ БЛОКОВ
+                var table = document.getElementById("Invent_Table");
+                table.style.visibility = "visible";
+                var button = document.getElementById("save_invent");
+                button.style.visibility = "visible";
+                var div = document.getElementById("input_new_cartridge");
+                div.style.visibility = "visible";
+
+                // ЗАПИСЬ ID ИНВЕНТАРИЗАЦИИ В СКРЫТОЕ ПОЛЕ
+                var field = document.getElementById("invent_id");
+                var raw_invent_id = invent_id.split(" - ");
+                field.value = raw_invent_id[0];
+
+                // Заполнение таблицы новыми данными
+                data.forEach(item => {
+                    var row = tableBody.insertRow();
+                    var cell1 = row.insertCell(0);
+                    var cell2 = row.insertCell(1);
+                    var cell3 = row.insertCell(2);
+
+                    cell1.innerHTML = item.name;
+                    cell2.innerHTML = item.count;
+
+                    cell3.innerHTML = `
+                                <button type="button" class="btn btn-delete" onclick="decrementCount(this)">-</button>
+                                <button type="button" class="btn btn-save" onclick="incrementCount(this)">+</button>
+                        `;
+                });
+
+                updateRawTable();
+            } else {
+                console.error("Failed to fetch data:", response.statusText);
+            }
+        } catch (error) {
+            console.error("Error:", error);
+        }
+    });
+
+    document.getElementById("save_invent").addEventListener("click", async function (event) {
+        event.preventDefault(); // Предотвращаем отправку формы
+
+        var select = document.getElementById("all_invents");
+        var selectedOption = select.options[select.selectedIndex];
+        var raw_invent_id = selectedOption.value.split(" - ");
+        var invent_id = raw_invent_id[0];
+
+        var invent_table = document.getElementById("raw_table").value;
+
+        try {
+            const response = await fetch('@Url.Page("/edit-invent", new { handler = "Save_invent" })', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                },
+                body: JSON.stringify({ id: invent_id, text: invent_table })
+            });
+
+            if (response.ok) {
+                updateRawTable();
+            } else {
+                console.error("Failed to fetch data:", response.statusText);
+            }
+        } catch (error) {
+            console.error("Error:", error);
+        }
+    });
+
+    function decrementCount(button) {
+        let row = button.closest('tr');
+        let countCell = row.cells[1];
+        let count = parseInt(countCell.innerText);
+
+        if (count > 1) {
+            countCell.innerText = count - 1;
+        } else {
+            row.remove();
+        }
+        updateRawTable();
+    }
+
+    function incrementCount(button) {
+        var row = button.closest("tr");
+        var countCell = row.cells[1];
+        var count = parseInt(countCell.innerText);
+
+        countCell.innerText = count + 1;
+        updateRawTable();
+    }
+
+    function updateRawTable() {
+        let tableBody = document.getElementById("Invent_Table_Body");
+        let rawData = [];
+
+        for (let i = 0, row; row = tableBody.rows[i]; i++) {
+            let cell1 = row.cells[0].innerText;
+            let cell2 = row.cells[1].innerText;
+            rawData.push(cell1 + "/" + cell2);
+        }
+
+        let rawTableInput = document.getElementById("raw_table");
+        rawTableInput.value = rawData.join(",");
+    }
+</script>

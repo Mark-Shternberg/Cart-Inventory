@@ -1,0 +1,17 @@
+﻿@page
+@model IndexModel
+@{
+    ViewData["Title"] = "Cartridges";
+}
+
+<div style="text-align:left; display: flex;">
+    <form action="/edit-invent" style="margin-right: 20px;">
+        <button class="btn btn-default" type="submit">Edit inventarisations</button>
+    </form>
+    <form action="/all-cart-invents" style="margin-bottom: 20px;">
+        <button class="btn btn-default" type="submit">All inventarisations</button>
+    </form>
+</div>
+
+@Html.Raw(ViewData["DataTable"])
+

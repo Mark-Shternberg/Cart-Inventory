@@ -1,0 +1,13 @@
+﻿@page
+@model Cart_Inventory.Pages.all_modules_inventsModel
+@{
+    ViewData["Title"] = "All cartridge inventarisations";
+}
+
+<div style="text-align:left">
+    <form action="/edit-invent">
+        <button class="btn btn-default" type="submit">Edit inventarisations</button>
+    </form>
+</div>
+
+@Html.Raw(ViewData["DataTable"])

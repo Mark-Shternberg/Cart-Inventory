@@ -1,0 +1,129 @@
+﻿@page
+@model Cart_Inventory.Pages.printersModel
+@{
+    ViewData["Title"] = "Printers";
+}
+
+<h3 style="text-align:center;">Printer models that use inventory cartridges</h3><br />
+
+<div style="border-style:solid; border-width:1px; border-radius: 10px; padding: 10px; margin-bottom: 30px; text-align:center;">
+    <form asp-page-handler="Add_new_printer" method="post" id="main_form">
+        <div style="text-align: center; align-items: center; justify-content: space-around;">
+            <table width="100%">
+                <tbody>
+                    <tr style="display: flex; justify-content: space-evenly; align-items: flex-start;">
+                        <td>
+                            <div class="form-group row">
+                                <input name="name" type="text" placeholder="Name" />
+                            </div>
+
+                            <div class="form-group row">
+                                Select cartridge to add:
+                                <select id="cartridges" name="cartridges">
+                                    @foreach (var cartridge in Model.all_cartridges)
+                                    {
+                                        <option value="@cartridge">@cartridge</option>
+                                    }
+                                </select>
+                                <button type="button" class="btn btn-default" id="link_cartridge_btn" style="margin-top: 10px;width: 300px;">
+                                    Link cartridge to printer
+                                </button>
+                            </div>
+                        </td>
+                        <td>
+                            <table class="table" style="width:300px; vertical-align: middle;" id="linked_cartridges_table">
+                                <thead>
+                                    <tr>
+                                        <th colspan="2">Linked cartridges</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="linked_cartridges_table_body"></tbody>
+                            </table>
+                        <input hidden name="raw_table" id="raw_table">
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <button type="submit" class="btn btn-save">Add new printer</button>
+    </form>
+</div>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>Id</th>
+            <th>Model</th>
+            <th>Barcode</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var items in @Model.main_table!)
+        {
+            <tr>
+                <td>@items.id</td>
+                <td>@items.name</td>
+                <td>
+                    @foreach (var cart in items.cartridges.Split(',')!)
+                    {
+                        @cart <br />
+                    }
+                </td>
+                <td>
+                    <form asp-page-handler="Delete_printer" method="post">
+                        <input type="hidden" name="id" value="@items.id">
+                        <button type="submit" class="btn btn-delete">Delete</button>
+                    </form>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+<script>
+    document.getElementById("link_cartridge_btn").addEventListener("click", function (event) {
+        event.preventDefault(); // Предотвращаем отправку формы
+
+        var select = document.getElementById("cartridges");
+        var selectedOption = select.options[select.selectedIndex];
+
+        if (selectedOption) {
+            var tableBody = document.getElementById("linked_cartridges_table_body");
+            var newRow = tableBody.insertRow();
+
+            var cell1 = newRow.insertCell(0);
+            cell1.textContent = selectedOption.text;
+
+            var cell2 = newRow.insertCell(1);
+            var deleteButton = document.createElement("button");
+            deleteButton.textContent = "Unlink";
+            deleteButton.classList.add("btn", "btn-delete");
+            deleteButton.onclick = function () {
+                tableBody.deleteRow(newRow.rowIndex - 1);
+                var option = document.createElement("option");
+                option.text = selectedOption.text;
+                option.value = selectedOption.value;
+                select.add(option);
+                updateRawTable();
+            };
+            cell2.appendChild(deleteButton);
+
+            select.remove(select.selectedIndex); // Удаляем выбранный элемент из блока select
+
+            updateRawTable();
+        }
+    });
+
+    function updateRawTable() {
+        let tableBody = document.getElementById("linked_cartridges_table_body");
+        let rawData = [];
+
+        for (let i = 0, row; row = tableBody.rows[i]; i++) {
+            rawData.push(row.cells[0].innerText);
+        }
+
+        let rawTableInput = document.getElementById("raw_table");
+        rawTableInput.value = rawData.join(",");
+    }
+</script>

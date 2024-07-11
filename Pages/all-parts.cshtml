@@ -1,0 +1,40 @@
+﻿@page
+@model Cart_Inventory.Pages.all_cartsModel
+@{
+    ViewData["Title"] = "All cartridges/modules";
+}
+
+<div style="text-align: center;">
+    <form asp-page-handler="Add_new_model" method="post" id="main_form">
+        <input name="name" type="text" placeholder="Model name" />
+        <input name="barcode" type="text" placeholder="Barcode" />
+        <button type="submit" class="btn btn-save">Add new model</button>
+    </form>
+</div>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>Id
+            <th>Model
+            <th>Barcode
+            <th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var items in @Model.main_table!)
+        {
+            <tr>
+                <td>@items.id</td>
+                <td>@items.model</td>
+                <td>@items.barcode</td>
+                <td>
+                    <form asp-page-handler="Delete_module" method="post">
+                        <input hidden name="id" value="@items.id">
+                        <button type="submit" class="btn btn-delete">Delete</button>
+                    </form>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

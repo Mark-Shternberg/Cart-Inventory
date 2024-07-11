@@ -1,0 +1,167 @@
+﻿@page
+@model Cart_Inventory.Pages.new_inventModel
+@{
+    @using Microsoft.AspNetCore.Mvc;
+
+    ViewData["Title"] = "New inventarisation";
+
+    <script>
+        async function onTextInputChanged() {
+            var inputText = document.getElementById("textInput").value;
+
+            // Выполнение AJAX-запроса к серверу
+            const response = await fetch('/new-invent?handler=OnTextInputChanged', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                },
+                body: JSON.stringify({ text: inputText })
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                //var jsonObject = JSON.parse(data);
+                //var name = jsonObject.name;
+
+                var tableBody = document.getElementById("Carts_Table_Body");
+
+                // Очистка текущего содержимого таблицы
+                //var tableBody = document.getElementById("resultTableBody");
+                //tableBody.innerHTML = "";
+
+                // Заполнение таблицы новыми данными
+                data.forEach(item => {
+                    updateTable(item.name);
+                });
+            } else {
+                console.error("Failed to fetch data:", response.statusText);
+            }
+        }
+
+        function updateRawTable() {
+            let tableBody = document.getElementById("Carts_Table_Body");
+            let rawData = [];
+
+            for (let i = 0, row; row = tableBody.rows[i]; i++) {
+                let cell1 = row.cells[0].innerText;
+                let cell2 = row.cells[1].innerText;
+                rawData.push(cell1 + "/" + cell2);
+            }
+
+            let rawTableInput = document.getElementById("raw_table");
+            rawTableInput.value = rawData.join(",");
+        }
+
+        function updateTable(searchText) {
+            // Получаем таблицу по ID
+            var table = document.getElementById("Carts_Table_Body");
+            let found = false;
+
+            var inputText = document.getElementById("textInput");
+
+            // Проходим по всем строкам таблицы, начиная со второй (первая - заголовок)
+            for (let i = 0, row; row = table.rows[i]; i++) {
+                // Получаем значение первой ячейки текущей строки
+                let cellText = row.cells[0].innerText;
+
+                // Проверяем, совпадает ли текст
+                if (cellText === searchText) {
+                    // Увеличиваем значение во второй ячейке на 1
+                    let countCell = row.cells[1];
+                    countCell.innerText = parseInt(countCell.innerText) + 1;
+                    found = true;
+                    inputText.value = "";
+                    updateRawTable();
+                    break;
+                }
+            }
+
+            // Если совпадение не найдено, добавляем новую строку
+            if (!found) {
+                let newRow = table.insertRow();
+                let cell1 = newRow.insertCell(0);
+                let cell2 = newRow.insertCell(1);
+                let cell3 = newRow.insertCell(2);
+
+                cell1.innerHTML = searchText;
+                cell2.innerHTML = "1";
+                cell3.innerHTML = `
+                                        <button type="button" class="btn btn-delete" onclick="decrementCount(this)">-</button>
+                                        <button type="button" class="btn btn-save" onclick="incrementCount(this)">+</button>
+                                `;
+                inputText.value = "";
+                updateRawTable();
+            }
+        }
+    </script>
+}
+
+<div style="border-style:solid; border-width:1px; border-radius: 10px; padding: 10px; margin-bottom: 30px; text-align:center;">
+    <form asp-page-handler="SubmitInventorization" method="post" id="main_form">
+        <div style="text-align: center; align-items: center; justify-content: space-around;">
+            <table width="100%">
+                <tbody>
+                    <tr style="display: flex; justify-content: space-evenly; align-items: flex-start;">
+                        <td>
+                            <legend>New Inventorization</legend>
+                            <div class="form-group row">
+                                <a>Date: @DateTime.Now.ToString("dd.MM.yyyy")</a>
+                            </div>
+
+                            <div class="form-group row">
+                                Select type of inventarisation:
+                                <select for="categories" name="CategoryId" items="">
+                                    <option>Cartridges</option>
+                                    <option>Modules</option>
+                                </select>
+                            </div>
+                        </td>
+                        <td>
+                            @Html.AntiForgeryToken()
+                            <input type="text" id="textInput" oninput="onTextInputChanged()" />
+                            <br />
+                            <table id="Carts_Table" class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Count</th>
+                                        <th></th>
+                                    </tr>
+                                </thead>
+                                <tbody id="Carts_Table_Body">
+                                </tbody>
+                            </table>
+                            <input hidden name="raw_table" type="text" id="raw_table" />
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <button class="btn btn-save">Save</button>
+    </form>
+</div>
+
+<script>
+    function decrementCount(button) {
+        let row = button.closest('tr');
+        let countCell = row.cells[1];
+        let count = parseInt(countCell.innerText);
+
+        if (count > 1) {
+            countCell.innerText = count - 1;
+        } else {
+            row.remove();
+        }
+        updateRawTable();
+    }
+
+    function incrementCount(button) {
+        var row = button.closest("tr");
+        var countCell = row.cells[1];
+        var count = parseInt(countCell.innerText);
+
+        countCell.innerText = count + 1;
+        updateRawTable();
+    }
+</script>
