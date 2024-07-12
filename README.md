@@ -9,7 +9,8 @@ It is based on the idea of ​​using barcodes and a barcode scanner
 > SCRIPT UNDER DEVELOPMENT
 
 1. Download last release archive
-2. Run `sudo chmod +x install-linux.sh && sudo ./install-linux.sh'
+2. tar xvf cart-inventory*
+3. Run `sudo chmod +x install.sh && su root ./install.sh`
 
 # Manual install
 
@@ -18,4 +19,5 @@ It is based on the idea of ​​using barcodes and a barcode scanner
 3. Create user and table for programm
 4. Download last release archive
 5. Edit "MySQLConnection" block in appsettings.json
-6. Run command `dotnet Cart_Inventory.dll` and go http://localhost:5000
+6. Run command `dotnet Cart_Inventory.dll`
+7. Install reverse proxy to http://localhost:5000
