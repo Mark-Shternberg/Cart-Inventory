@@ -3,7 +3,7 @@
 This is WEB application for quick inventarisation of cartridges and printers modules \
 It is based on the idea of ​​using barcodes and a barcode scanner
 
-![Screenshot of  Web UI](https://medvedev-it.ru/wp-content/uploads/2024/07/Screenshot-2024-07-12-124817.png)
+![Screenshot of  Web UI](https://medvedev-it.ru/wp-content/uploads/2024/07/Screenshot-2024-07-12-124817-2.png)
 
 # Installation via install script
 > SCRIPT UNDER DEVELOPMENT
