@@ -59,6 +59,8 @@
         </tr>
     </thead>
     <tbody>
+        @if (@Model.main_table != null) 
+        {
         @foreach (var items in @Model.main_table!)
         {
             <tr>
@@ -77,6 +79,7 @@
                     </form>
                 </td>
             </tr>
+        }
         }
     </tbody>
 </table>

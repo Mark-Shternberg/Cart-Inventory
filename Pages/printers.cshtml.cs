@@ -79,6 +79,7 @@ namespace Cart_Inventory.Pages
                 var dataTableObjectInPOCO = JsonConvert.DeserializeObject<List<main_table_model>>(serializeObject);
                 main_table = dataTableObjectInPOCO;
             }
+            else main_table = null;
         }
 
         private void loadCartridges() //ЗАГРУЗКА ВСЕХ МОДУЛЕЙ ПРИНТЕРОВ
