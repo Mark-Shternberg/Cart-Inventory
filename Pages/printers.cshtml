@@ -59,24 +59,27 @@
         </tr>
     </thead>
     <tbody>
-        @foreach (var items in @Model.main_table!)
+        @if(Model.main_table != null)
         {
-            <tr>
-                <td>@items.id</td>
-                <td>@items.name</td>
-                <td>
-                    @foreach (var cart in items.cartridges.Split(',')!)
-                    {
-                        @cart <br />
-                    }
-                </td>
-                <td>
-                    <form asp-page-handler="Delete_printer" method="post">
-                        <input type="hidden" name="id" value="@items.id">
-                        <button type="submit" class="btn btn-delete">Delete</button>
-                    </form>
-                </td>
-            </tr>
+            @foreach (var items in @Model.main_table!)
+            {
+                <tr>
+                    <td>@items.id</td>
+                    <td>@items.name</td>
+                    <td>
+                        @foreach (var cart in items.cartridges.Split(',')!)
+                        {
+                            @cart <br />
+                        }
+                    </td>
+                    <td>
+                        <form asp-page-handler="Delete_printer" method="post">
+                            <input type="hidden" name="id" value="@items.id">
+                            <button type="submit" class="btn btn-delete">Delete</button>
+                        </form>
+                    </td>
+                </tr>
+            }
         }
     </tbody>
 </table>

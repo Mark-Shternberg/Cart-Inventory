@@ -22,19 +22,22 @@
         </tr>
     </thead>
     <tbody>
-        @foreach (var items in @Model.main_table!)
+        @if(Model.main_table != null)
         {
-            <tr>
-                <td>@items.id</td>
-                <td>@items.model</td>
-                <td>@items.barcode</td>
-                <td>
-                    <form asp-page-handler="Delete_module" method="post">
-                        <input hidden name="id" value="@items.id">
-                        <button type="submit" class="btn btn-delete">Delete</button>
-                    </form>
-                </td>
-            </tr>
+            @foreach (var items in @Model.main_table!)
+            {
+                <tr>
+                    <td>@items.id</td>
+                    <td>@items.model</td>
+                    <td>@items.barcode</td>
+                    <td>
+                        <form asp-page-handler="Delete_module" method="post">
+                            <input hidden name="id" value="@items.id">
+                            <button type="submit" class="btn btn-delete">Delete</button>
+                        </form>
+                    </td>
+                </tr>
+            }
         }
     </tbody>
 </table>
