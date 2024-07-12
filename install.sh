@@ -70,7 +70,8 @@ wget https://dot.net/v1/dotnet-install.sh -O dotnet-install.sh
 chmod +x ./dotnet-install.sh
 ./dotnet-install.sh --channel 8.0
 rm dotnet-install.sh
-mv .dotnet /var/www/cartinventory/.dotnet
+sleep 1
+mv /root/.dotnet /var/www/cartinventory/
 chown -R www-data:www-data /var/www/cartinventory
 chmod -R 744 /var/www/cartinventory
 
@@ -123,7 +124,7 @@ Restart=always\nRestartSec=5" > /etc/systemd/system/cart-inventory.service
 
   if [ $? -eq 0 ]; then
     echo -e "${colGreen}\tGreat! Cart inventory service installed and started\n\
-    now you can go to: http://$server_name!${resetCol}"
+\tNow you can go to: http://$server_name!${resetCol}"
   else
     echo -e "$colRed Error starting service. Check logs! $resetCol"
     exit 0 
