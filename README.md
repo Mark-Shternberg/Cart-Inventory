@@ -20,3 +20,12 @@ It is based on the idea of ​​using barcodes and a barcode scanner
 5. Edit "MySQLConnection" block in appsettings.json
 6. Run command `dotnet Cart_Inventory.dll`
 7. Install reverse proxy to http://localhost:5000
+
+# How to use
+
+1. Add models of cartridges or modules<br>
+  *you can add model with several barcodes, separate them with `,`
+2. Add printers with linked related models of cartridges and models
+  *link with models is necessary, or printer will not be added
+3. Now in the NEW INVENTORISATION page you can add cartridges via barcode scanner or entering barcode manually
+4. All done

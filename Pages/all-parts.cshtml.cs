@@ -89,7 +89,7 @@ namespace Cart_Inventory.Pages
 
                     int error = 0;
                     //--------------------------------НАИМЕНОВАНИЕ КАРТРИДЖА------------------
-                    if (model.name != null && model.name != "" && model.name.Contains("/") && model.name.Contains(",")) 
+                    if (model.name != null && model.name != "" && ! model.name.Contains("/") && ! model.name.Contains(",")) 
                     {
                         command.Parameters.AddWithValue("?model", model.name);
                     }
