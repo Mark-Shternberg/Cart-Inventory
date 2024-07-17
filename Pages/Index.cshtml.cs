@@ -120,15 +120,24 @@ namespace Cart_Inventory.Pages
                 main_table.Columns.Add("Cartridge");
                 main_table.Columns.Add("Printer");
 
-                for (int i = numberOfResults; i > numberOfResults - 8; i--)   // построчно считываем данные
+                for (int i = numberOfResults; i > numberOfResults - 8 && i > 0 ; i--)   // построчно считываем данные
                 {
 
                     string date = dt.Rows[i - 1][1].ToString();
-                    main_table.Columns.Add(date);
+
+                    string columnName = date;
+                    int columnCount = 1;
+
+                    while (main_table.Columns.Contains(columnName))
+                    {
+                        columnName = $"{columnName} - {columnCount}";
+                        columnCount++;
+                    }
+                    main_table.Columns.Add(columnName);
 
                     string[] tmp = dt.Rows[i - 1][2].ToString().Split(',');
 
-                    int column_id = main_table.Columns[date].Ordinal;
+                    int column_id = main_table.Columns[columnName].Ordinal;
                     foreach (string item in tmp)
                     {
                         string[] tmp2 = item.Split("/");
@@ -178,8 +187,15 @@ namespace Cart_Inventory.Pages
                         main_table.Rows[row][column - 1] = "0";
                     }
                     int old_count = Convert.ToInt32(count);
+                    string[] tmp = main_table.Rows[row][column - 1].ToString().Split(" (");
 
-                    int difference = Convert.ToInt32(main_table.Rows[row][column - 1]) - old_count;
+                    string new_count;
+                    if (tmp.Count() > 0)
+                    {
+                        new_count = tmp[0];
+                    } else { new_count = main_table.Rows[row][column - 1].ToString(); }
+
+                    int difference = Convert.ToInt32(new_count) - old_count;
                     string str_difference;
                     if (difference > 0) str_difference = "+" + difference;
                     else if (difference == 0) return str_out;
@@ -243,9 +259,10 @@ namespace Cart_Inventory.Pages
 
                     using var reader = command.ExecuteReader();
                     {
+                        string printers = "No data";
+
                         if (reader.HasRows) // если есть данные
                         {
-                            string printers = "No data";
 
                             while (reader.Read())   // построчно считываем данные
                             {
@@ -262,8 +279,8 @@ namespace Cart_Inventory.Pages
                                     }
                                 }
                             }
-                            return printers;
                         }
+                        return printers;
                     }
                 }
             }

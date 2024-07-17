@@ -17,7 +17,7 @@
         <input hidden name="invent_id" type="text" id="invent_id" />
         @Html.AntiForgeryToken()
         <button class="btn btn-default" id="edit_invent">Edit</button>
-        <button class="btn btn-delete">Delete</button>
+        <button class="btn btn-delete" id="delete_invent">Delete</button>
         <button class="btn btn-save" id="save_invent" style="visibility:hidden;">Save</button>
     </form>
 </div>
@@ -167,6 +167,36 @@
                         `;
                 });
 
+                updateRawTable();
+            } else {
+                console.error("Failed to fetch data:", response.statusText);
+            }
+        } catch (error) {
+            console.error("Error:", error);
+        }
+    });
+
+    document.getElementById("delete_invent").addEventListener("click", async function (event) {
+        event.preventDefault(); // Предотвращаем отправку формы
+
+        var select = document.getElementById("all_invents");
+        var selectedOption = select.options[select.selectedIndex];
+        var raw_invent_id = selectedOption.value.split(" - ");
+        var invent_id = raw_invent_id[0];
+
+        var invent_table = document.getElementById("raw_table").value;
+
+        try {
+            const response = await fetch('@Url.Page("/edit-invent", new { handler = "DeleteInventorization" })', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                },
+                body: JSON.stringify({ id: invent_id })
+            });
+
+            if (response.ok) {
                 updateRawTable();
             } else {
                 console.error("Failed to fetch data:", response.statusText);

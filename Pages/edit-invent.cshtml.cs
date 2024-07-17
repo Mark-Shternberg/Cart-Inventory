@@ -53,7 +53,7 @@ namespace Cart_Inventory.Pages
 
         public class InputModelDelete
         {
-            public string? invent_id { get; set; }
+            public string? id { get; set; }
         }
 
         public List<string>? all_invents { get; set; } = new List<string>();
@@ -230,7 +230,7 @@ namespace Cart_Inventory.Pages
             return Page();
         }
 
-        public IActionResult OnPostDeleteInventorization([FromForm] InputModelDelete model) //ОБРАБОТКА ПРИ УДАЛЕНИИ ИНВЕНТАРИЗАЦИИ
+        public IActionResult OnPostDeleteInventorization([FromBody] InputModelDelete model) //ОБРАБОТКА ПРИ УДАЛЕНИИ ИНВЕНТАРИЗАЦИИ
         {
             try
             {
@@ -246,9 +246,9 @@ namespace Cart_Inventory.Pages
 
                     int error = 0;
                     //--------------------------------ID------------------
-                    if (model.invent_id != null && model.invent_id != "")
+                    if (model.id != null && model.id != "")
                     {
-                        command.Parameters.AddWithValue("?id", model.invent_id);
+                        command.Parameters.AddWithValue("?id", model.id);
                     }
                     else error++;
                     //---------------------------------------------------

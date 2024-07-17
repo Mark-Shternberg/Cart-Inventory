@@ -104,7 +104,7 @@ namespace Cart_Inventory.Pages
                     command.Prepare();
 
                     //--------------------------------ДАТА------------------
-                    command.Parameters.AddWithValue("?date", DateTime.Now.ToString("d", new CultureInfo("en-US")));
+                    command.Parameters.AddWithValue("?date", DateTime.Now.ToString("dd.MM.yyyy"));
                     //---------------------------------------------------
 
                     //--------------------------------ТАБЛИЦА------------------
