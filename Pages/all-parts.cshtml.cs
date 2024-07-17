@@ -4,6 +4,7 @@ using MySqlConnector;
 using Newtonsoft.Json;
 using System.Data;
 using System.Globalization;
+using System.Text.RegularExpressions;
 using static Cart_Inventory.Pages.new_inventModel;
 using static System.Runtime.InteropServices.JavaScript.JSType;
 
@@ -91,6 +92,13 @@ namespace Cart_Inventory.Pages
                     //--------------------------------НАИМЕНОВАНИЕ КАРТРИДЖА------------------
                     if (model.name != null && model.name != "" && ! model.name.Contains("/") && ! model.name.Contains(",")) 
                     {
+                        string model_name = model.name;
+                        if (model_name.EndsWith(" "))
+                        {
+                            model_name = model_name.TrimEnd(' '); // Удаление пробела в конце при его наличии
+                        }
+                        model_name = Regex.Replace(model_name, @"\s+", " "); // Замена множества пробелов на один
+
                         command.Parameters.AddWithValue("?model", model.name);
                     }
                     else error++;

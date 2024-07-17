@@ -6,6 +6,7 @@ using static Cart_Inventory.Pages.all_cartsModel;
 using System.Data;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.VisualBasic;
+using System.Text.RegularExpressions;
 
 namespace Cart_Inventory.Pages
 {
@@ -121,9 +122,16 @@ namespace Cart_Inventory.Pages
                     command.Prepare();
 
                     int error = 0;
-                    //--------------------------------НАИМЕНОВАНИЕ КАРТРИДЖА------------------
+                    //--------------------------------НАИМЕНОВАНИЕ ПРИНТЕРА------------------
                     if (model.name != null && model.name != "")
                     {
+                        string model_name = model.name;
+                        if (model_name.EndsWith(" "))
+                        {
+                            model_name = model_name.TrimEnd(' '); // Удаление пробела в конце при его наличии
+                        }
+                        model_name = Regex.Replace(model_name, @"\s+", " "); // Замена множества пробелов на один
+
                         command.Parameters.AddWithValue("?name", model.name);
                     }
                     else error++;

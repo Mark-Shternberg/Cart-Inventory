@@ -21,8 +21,10 @@
 
             if (response.ok) {
                 const data = await response.json();
-                //var jsonObject = JSON.parse(data);
-                //var name = jsonObject.name;
+
+                if (data === "") {
+                    return; // Выход из функции, если ответ пустой
+                }
 
                 var tableBody = document.getElementById("Carts_Table_Body");
 
