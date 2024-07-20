@@ -8,10 +8,12 @@
     <form asp-page-handler="Add_new_model" method="post" id="main_form">
         <input name="name" type="text" placeholder="Model name" />
         <input name="barcode" type="text" placeholder="Barcode" />
-        <input type="number" name="yellow_zone" placeholder="Yellow zone*">
+        <input type="number" name="yellow_zone" placeholder="Yellow zone">
         <button type="submit" class="btn btn-save">Add new model</button>
     </form>
-    <a>* The value below which the cartridge will be marked yellow</a>
+    <a>Name: Name of module, must not contain ',' or '/'</a> <br />
+    <a>Barcode: You can add several barcodes, saparated by ','</a> <br />
+    <a>Yellow zone: The value below which the cartridge will be marked yellow</a>
 </div>
 
 <table class="table">
@@ -45,9 +47,9 @@
                     </td>
                     <td style="display: flex">
                         <button type="button" class="btn btn-edit" data-id="@item.id" style="margin-right: 10px;">Edit</button>
+                        <button hidden type="button" class="btn btn-default" data-id="@item.id" style="margin-right: 10px;">Cancel</button>
                         @Html.AntiForgeryToken()
                         <button hidden type="button" class="btn btn-save btn-save-edit" data-id="@item.id" style="margin-right: 10px;">Save</button>
-                        <button hidden type="button" class="btn btn-default" data-id="@item.id" style="margin-right: 10px;">Cancel</button>
                         <form asp-page-handler="Delete_module" method="post" style="margin: 0;">
                             <input hidden name="id" value="@item.id">
                             <button type="submit" data-id="@item.id" class="btn btn-delete">Delete</button>
