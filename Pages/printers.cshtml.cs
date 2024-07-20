@@ -7,6 +7,7 @@ using System.Data;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.VisualBasic;
 using System.Text.RegularExpressions;
+using System.Reflection;
 
 namespace Cart_Inventory.Pages
 {
@@ -70,11 +71,24 @@ namespace Cart_Inventory.Pages
 
             using var command = new MySqlCommand("SELECT * FROM printers", connection);
 
-            using var reader_main = command.ExecuteReader(); // ПОЛУЧЕНИЕ ТАБЛИЦЫ ИНВЕНТАРИЗАЦИЙ
+            using var reader_main = command.ExecuteReader();
+
             if (reader_main.HasRows)
             {
                 DataTable dt = new DataTable();
                 dt.Load(reader_main);
+
+                foreach (DataRow row in dt.Rows)
+                {
+                    string[] tmp = row[2].ToString().Split(",");
+                    string cartridges = "";
+                    foreach (string cartridge in tmp)
+                    {
+                        if (cartridges == "") cartridges = get_cartridge(cartridge);
+                        else cartridges = cartridges + "," + get_cartridge(cartridge);
+                    }
+                    row[2] = cartridges; 
+                }
 
                 string serializeObject = JsonConvert.SerializeObject(dt);
                 var dataTableObjectInPOCO = JsonConvert.DeserializeObject<List<main_table_model>>(serializeObject);
@@ -83,9 +97,42 @@ namespace Cart_Inventory.Pages
             else main_table = null;
         }
 
+        private string get_cartridge(string id) //ПОЛУЧЕНИЕ НАИМЕНОВАНИЯ КАРТРИДЖА ПО ID
+        {
+            try
+            {
+                string sqlExpression = "SELECT model FROM cartridges WHERE id=?id";
+
+                using (var connection = new MySqlConnection(sql_connection()))
+                {
+                    connection.Open();
+
+                    using var command = new MySqlCommand(sqlExpression, connection);
+                    command.Parameters.AddWithValue("?id", id);
+
+                    using var reader = command.ExecuteReader();
+                    {
+                        if (reader.HasRows) // если есть данные
+                        {
+                            while (reader.Read())   // построчно считываем данные
+                            {
+                                return reader.GetString(0);
+                            }
+                            return "No data";
+                        }
+                        else return "No data";
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                return ex.ToString();
+            }
+        }
+
         private void loadCartridges() //ЗАГРУЗКА ВСЕХ МОДУЛЕЙ ПРИНТЕРОВ
         {
-            string sqlExpression = "SELECT model FROM cartridges";
+            string sqlExpression = "SELECT id,model FROM cartridges";
 
             using (var connection = new MySqlConnection(sql_connection()))
             {
@@ -100,7 +147,7 @@ namespace Cart_Inventory.Pages
                     {
                         while (reader.Read())   // построчно считываем данные
                         {
-                            all_cartridges.Add(reader.GetString(0));
+                            all_cartridges.Add(reader.GetValue(0).ToString() + " - " + reader.GetString(1));
                         }
                     }
                 }
@@ -161,7 +208,7 @@ namespace Cart_Inventory.Pages
             return Page();
         }
 
-        public IActionResult OnPostDelete_printer([FromForm] delete_printer model) //ОБРАБОТКА ПРИ УДАЛЕНИИ МОДУЛЯ
+        public IActionResult OnPostDelete_printer([FromForm] delete_printer model) //ОБРАБОТКА ПРИ УДАЛЕНИИ ПРИНТЕРА
         {
             try
             {

@@ -145,16 +145,49 @@ namespace Cart_Inventory.Pages
                         if (check_cart_exist(tmp2[0]) == 1)
                         {
 
-                            int row_id = find_row(tmp2[0]);
+                            int row_id = find_row(get_cartridge(tmp2[0]), tmp2[0]);
                             //main_table.Rows[row_id][column_id] = invent_difference(column_id, row_id, tmp2[1], 0);
                             main_table.Rows[row_id][column_id] = tmp2[1];
-                            main_table.Rows[row_id][column_id-1] = invent_difference(column_id, row_id, tmp2[1]);
+                            main_table.Rows[row_id][column_id - 1] = invent_difference(column_id, row_id, tmp2[1]);
                         }
                     }
                 }
             }
 
-            int find_row(string name) //ПОИСК СТРОКИ
+            string get_cartridge(string id) //ПОЛУЧЕНИЕ НАИМЕНОВАНИЯ КАРТРИДЖА ПО ID
+            {
+                try
+                {
+                    string sqlExpression = "SELECT model FROM cartridges WHERE id=?id";
+
+                    using (var connection = new MySqlConnection(sql_connection()))
+                    {
+                        connection.Open();
+
+                        using var command = new MySqlCommand(sqlExpression, connection);
+                        command.Parameters.AddWithValue("?id", id);
+
+                        using var reader = command.ExecuteReader();
+                        {
+                            if (reader.HasRows) // если есть данные
+                            {
+                                while (reader.Read())   // построчно считываем данные
+                                {
+                                    return reader.GetString(0);
+                                }
+                                return "No data";
+                            }
+                            else return "No data";
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    return ex.ToString();
+                }
+            }
+
+            int find_row(string name, string id) //ПОИСК СТРОКИ
             {
                 int rowIndex = -1;
 
@@ -162,7 +195,7 @@ namespace Cart_Inventory.Pages
                 {
                     if (main_table.Rows[i].Field<string>(0) != null && main_table.Rows[i].Field<string>(0) == name)
                     {
-                        main_table.Rows[i][1] = get_printer_by_cart(name);
+                        main_table.Rows[i][1] = get_printer_by_cart(id);
                         return i;
                     }
                 }
@@ -171,7 +204,7 @@ namespace Cart_Inventory.Pages
                 {
                     main_table.Rows.Add(name);
                     int row_id = main_table.Rows.Count - 1;
-                    main_table.Rows[row_id][1] = get_printer_by_cart(name);
+                    main_table.Rows[row_id][1] = get_printer_by_cart(id);
                     return row_id;
                 }
                 return -1;
@@ -188,15 +221,8 @@ namespace Cart_Inventory.Pages
                         main_table.Rows[row][column - 1] = "0";
                     }
                     int old_count = Convert.ToInt32(count);
-                    string[] tmp = main_table.Rows[row][column - 1].ToString().Split(" (");
 
-                    string new_count;
-                    if (tmp.Count() > 0)
-                    {
-                        new_count = tmp[0];
-                    } else { new_count = main_table.Rows[row][column - 1].ToString(); }
-
-                    int difference = Convert.ToInt32(new_count) - old_count;
+                    int difference = Convert.ToInt32(main_table.Rows[row][column - 1]) - old_count;
                     string str_difference;
                     if (difference > 0) str_difference = "+" + difference;
                     else if (difference == 0) return str_out;
@@ -212,28 +238,24 @@ namespace Cart_Inventory.Pages
             ViewData["DataTable"] = DataTableToHTML(main_table);
         }
 
-        private int check_cart_exist(string cart) //ПРОВЕРКА НА СУЩЕСТВОВАНИЕ КАРТРИДжА
+        private int check_cart_exist(string id) //ПРОВЕРКА НА СУЩЕСТВОВАНИЕ КАРТРИДжА
         {
             try
             {
-                string sqlExpression = "SELECT model FROM cartridges";
+                string sqlExpression = "SELECT model FROM cartridges WHERE id=?id";
 
                 using (var connection = new MySqlConnection(sql_connection()))
                 {
                     connection.Open();
 
                     using var command = new MySqlCommand(sqlExpression, connection);
-                    //command.Parameters.AddWithValue("@printer", printer);
+                    command.Parameters.AddWithValue("?id", id);
 
                     using var reader = command.ExecuteReader();
                     {
                         if (reader.HasRows) // если есть данные
                         {
-                            while (reader.Read())   // построчно считываем данные
-                            {
-                                if (reader.GetString(0) == cart) return 1;
-                            }
-                            return 0;
+                            return 1;
                         }
                     }
                 }
@@ -245,7 +267,7 @@ namespace Cart_Inventory.Pages
             return 0;
         }
 
-        private string get_printer_by_cart(string cart) //ПОЛУЧЕНИЕ ПРИНТЕРА ПО КАРТРИДЖУ
+        private string get_printer_by_cart(string cartridge_id) //ПОЛУЧЕНИЕ ПРИНТЕРА ПО КАРТРИДЖУ
         {
             try
             {
@@ -273,7 +295,7 @@ namespace Cart_Inventory.Pages
 
                                 foreach (string cartr in cartridges)
                                 {
-                                    if (cartr == cart)
+                                    if (cartr == cartridge_id)
                                     {
                                         if (printers == "No data") printers = printer;
                                         else printers = printers + ", " + printer;

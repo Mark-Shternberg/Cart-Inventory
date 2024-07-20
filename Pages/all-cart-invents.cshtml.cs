@@ -64,8 +64,7 @@ namespace Cart_Inventory.Pages
                         string[] tmp2 = item.Split("/");
                         if (check_cart_exist(tmp2[0]) == 1)
                         {
-
-                            int row_id = find_row(tmp2[0]);
+                            int row_id = find_row(get_cartridge(tmp2[0]), tmp2[0]);
                             //main_table.Rows[row_id][column_id] = invent_difference(column_id, row_id, tmp2[1], 0);
                             main_table.Rows[row_id][column_id] = tmp2[1];
                             main_table.Rows[row_id][column_id - 1] = invent_difference(column_id, row_id, tmp2[1]);
@@ -74,7 +73,40 @@ namespace Cart_Inventory.Pages
                 }
             }
 
-            int find_row(string name) //ПОИСК СТРОКИ
+            string get_cartridge(string id) //ПОЛУЧЕНИЕ НАИМЕНОВАНИЯ КАРТРИДЖА ПО ID
+            {
+                try
+                {
+                    string sqlExpression = "SELECT model FROM cartridges WHERE id=?id";
+
+                    using (var connection = new MySqlConnection(sql_connection()))
+                    {
+                        connection.Open();
+
+                        using var command = new MySqlCommand(sqlExpression, connection);
+                        command.Parameters.AddWithValue("?id", id);
+
+                        using var reader = command.ExecuteReader();
+                        {
+                            if (reader.HasRows) // если есть данные
+                            {
+                                while (reader.Read())   // построчно считываем данные
+                                {
+                                    return reader.GetString(0);
+                                }
+                                return "No data";
+                            }
+                            else return "No data";
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    return ex.ToString();
+                }
+            }
+
+            int find_row(string name, string id) //ПОИСК СТРОКИ
             {
                 int rowIndex = -1;
 
@@ -82,7 +114,7 @@ namespace Cart_Inventory.Pages
                 {
                     if (main_table.Rows[i].Field<string>(0) != null && main_table.Rows[i].Field<string>(0) == name)
                     {
-                        main_table.Rows[i][1] = get_printer_by_cart(name);
+                        main_table.Rows[i][1] = get_printer_by_cart(id);
                         return i;
                     }
                 }
@@ -91,7 +123,7 @@ namespace Cart_Inventory.Pages
                 {
                     main_table.Rows.Add(name);
                     int row_id = main_table.Rows.Count - 1;
-                    main_table.Rows[row_id][1] = get_printer_by_cart(name);
+                    main_table.Rows[row_id][1] = get_printer_by_cart(id);
                     return row_id;
                 }
                 return -1;
@@ -129,31 +161,27 @@ namespace Cart_Inventory.Pages
             }
 
             find_0();
-            ViewData["DataTable"] = Functions.DataTableToHTML(main_table);
+            ViewData["DataTable"] = DataTableToHTML(main_table);
         }
 
-        private int check_cart_exist(string cart) //ПРОВЕРКА НА СУЩЕСТВОВАНИЕ КАРТРИДжА
+        private int check_cart_exist(string id) //ПРОВЕРКА НА СУЩЕСТВОВАНИЕ КАРТРИДжА
         {
             try
             {
-                string sqlExpression = "SELECT model FROM cartridges";
+                string sqlExpression = "SELECT model FROM cartridges WHERE id=?id";
 
                 using (var connection = new MySqlConnection(sql_connection()))
                 {
                     connection.Open();
 
                     using var command = new MySqlCommand(sqlExpression, connection);
-                    //command.Parameters.AddWithValue("@printer", printer);
+                    command.Parameters.AddWithValue("?id", id);
 
                     using var reader = command.ExecuteReader();
                     {
                         if (reader.HasRows) // если есть данные
                         {
-                            while (reader.Read())   // построчно считываем данные
-                            {
-                                if (reader.GetString(0) == cart) return 1;
-                            }
-                            return 0;
+                            return 1;
                         }
                     }
                 }
@@ -222,6 +250,88 @@ namespace Cart_Inventory.Pages
                         main_table.Rows[i][j] = "0";
                     }
                 }
+            }
+        }
+
+        public string DataTableToHTML(DataTable dt) //КОВЕРТАЦИЯ ТАбЛИЦЫ В HTML
+        {
+            string sqlExpression = "SELECT model,yellow_zone FROM cartridges";
+            DataTable yellow_zone_table = new DataTable();
+
+            using (var connection = new MySqlConnection(sql_connection()))
+            {
+                connection.Open();
+
+                using var command = new MySqlCommand(sqlExpression, connection);
+                //command.Parameters.AddWithValue("@printer", printer);
+
+                using var reader = command.ExecuteReader();
+                {
+                    if (reader.HasRows) // если есть данные
+                    {
+                        yellow_zone_table.Load(reader);
+                    }
+                }
+            }
+
+            string html = "<table class=\"table\">";
+
+            // HEADERS
+            html += "<tr>";
+            for (int i = 0; i < dt.Columns.Count; i++)
+                if (i == 2)
+                {
+                    html += "<td style=\"min-width: 100px;border-top-style: solid;border-width: 4px;border-bottom-width: 1px; border-color: dimgray; border-bottom-color: #dee2e6;\">" + dt.Columns[i].ColumnName + "</td>";
+                }
+                else html += "<td style=\"min-width: 100px;\">" + dt.Columns[i].ColumnName + "</td>";
+            html += "</tr>";
+
+            // ROWS
+            string cell;
+            string[] tmp;
+            int count;
+            for (int i = 0; i < dt.Rows.Count; i++)
+            {
+                html += "<tr>";
+                for (int j = 0; j < dt.Columns.Count; j++)
+                {
+                    if (j > 1)
+                    {
+                        cell = dt.Rows[i][j].ToString();
+                        tmp = cell.Split(" (");
+                        count = Convert.ToInt32(tmp[0]);
+
+                        if (j == 2) // FIRST INVENTORY COLUMN
+                        {
+                            if (count == 0) html += "<td style=\"min-width: 100px;border-right-width: 4px;border-left-width: 4px; " +
+                                    "border-color: dimgray; background-color: salmon;border-bottom-color: #dee2e6;border-top-color: #dee2e6;\">" + dt.Rows[i][j].ToString() + "</td>";
+                            else if (count <= getYellowZone(dt.Rows[i][0].ToString())) html += "<td style=\"min-width: 100px;border-right-width: 4px;border-left-width: 4px; " +
+                                    "border-color: dimgray; background-color: khaki;border-bottom-color: #dee2e6;border-top-color: #dee2e6;\">" + dt.Rows[i][j].ToString() + "</td>";
+                            else html += "<td style=\"min-width: 100px;border-right-width: 4px;border-left-width: 4px; " +
+                                    "border-color: dimgray;border-bottom-color: #dee2e6;border-top-color: #dee2e6;background-color: darkseagreen;\">" + dt.Rows[i][j].ToString() + "</td>";
+                        }
+                        else
+                        {
+                            if (count == 0) html += "<td style=\"min-width: 100px; background-color: salmon;\">" + dt.Rows[i][j].ToString() + "</td>";
+                            else if (count <= getYellowZone(dt.Rows[i][0].ToString())) html += "<td style=\"min-width: 100px; background-color: khaki;\">" + dt.Rows[i][j].ToString() + "</td>";
+                            else html += "<td style=\"min-width: 100px;background-color: darkseagreen;\">" + dt.Rows[i][j].ToString() + "</td>";
+                        }
+                    }
+                    else html += "<td style=\"min-width: 100px;\">" + dt.Rows[i][j].ToString() + "</td>";
+                }
+
+                html += "</tr>";
+            }
+            html += "</table>";
+            return html;
+
+            int getYellowZone(string cartridge)
+            {
+                foreach (DataRow dr in yellow_zone_table.Rows)
+                {
+                    if (dr[0].ToString() == cartridge) return Convert.ToInt32(dr[1]);
+                }
+                return 2;
             }
         }
     }

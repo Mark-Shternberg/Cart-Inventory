@@ -16,9 +16,10 @@
         <input hidden name="raw_table" type="text" id="raw_table" />
         <input hidden name="invent_id" type="text" id="invent_id" />
         @Html.AntiForgeryToken()
-        <button class="btn btn-default" id="edit_invent">Edit</button>
+        <button type="button" class="btn btn-default" id="edit_invent">Edit</button>
         <button class="btn btn-delete" id="delete_invent">Delete</button>
-        <button class="btn btn-save" id="save_invent" style="visibility:hidden;">Save</button>
+        <button type="button" class="btn btn-default" id="edit_cancel" style="visibility:hidden;">Cancel</button>
+        <button type="button" class="btn btn-save" id="save_invent" style="visibility:hidden;">Save</button>
     </form>
 </div>
 
@@ -58,10 +59,6 @@
             //var name = jsonObject.name;
 
             var tableBody = document.getElementById("Invent_Table_Body");
-
-            // Очистка текущего содержимого таблицы
-            //var tableBody = document.getElementById("resultTableBody");
-            //tableBody.innerHTML = "";
 
             // Заполнение таблицы новыми данными
             data.forEach(item => {
@@ -138,13 +135,20 @@
                 var tableBody = document.getElementById("Invent_Table_Body");
                 tableBody.innerHTML = "";
 
-                // ВКЛЮЧЕНИЕ БЛОКОВ
+                // ВКЛЮЧЕНИЕ и ВЫКЛЮЧЕНИЕ БЛОКОВ
                 var table = document.getElementById("Invent_Table");
                 table.style.visibility = "visible";
                 var button = document.getElementById("save_invent");
                 button.style.visibility = "visible";
                 var div = document.getElementById("input_new_cartridge");
                 div.style.visibility = "visible";
+                var cancel = document.getElementById("edit_cancel");
+                cancel.style.visibility = "visible";
+
+                var edit = document.getElementById("edit_invent");
+                edit.style.visibility = "hidden";
+                var delete_button = document.getElementById("delete_invent");
+                delete_button.style.visibility = "hidden";
 
                 // ЗАПИСЬ ID ИНВЕНТАРИЗАЦИИ В СКРЫТОЕ ПОЛЕ
                 var field = document.getElementById("invent_id");
@@ -206,6 +210,25 @@
         }
     });
 
+    document.getElementById("edit_cancel").addEventListener("click", async function (event) {
+        event.preventDefault();
+
+        // ВЫКЛЮЧЕНИЕ и ВКЛЮЧЕНИЕ БЛОКОВ
+        var table = document.getElementById("Invent_Table");
+        table.style.visibility = "hidden";
+        var button = document.getElementById("save_invent");
+        button.style.visibility = "hidden";
+        var div = document.getElementById("input_new_cartridge");
+        div.style.visibility = "hidden";
+        var cancel = document.getElementById("edit_cancel");
+        cancel.style.visibility = "hidden";
+
+        var edit = document.getElementById("edit_invent");
+        edit.style.visibility = "visible";
+        var delete_button = document.getElementById("delete_invent");
+        delete_button.style.visibility = "visible";
+    });
+
     document.getElementById("save_invent").addEventListener("click", async function (event) {
         event.preventDefault(); // Предотвращаем отправку формы
 
@@ -263,7 +286,8 @@
         let rawData = [];
 
         for (let i = 0, row; row = tableBody.rows[i]; i++) {
-            let cell1 = row.cells[0].innerText;
+            let cartridgeID = row.cells[0].innerText.split(" - ")[0];
+            let cell1 = cartridgeID;
             let cell2 = row.cells[1].innerText;
             rawData.push(cell1 + "/" + cell2);
         }

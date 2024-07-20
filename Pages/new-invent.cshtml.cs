@@ -72,7 +72,6 @@ namespace Cart_Inventory.Pages
         {
             string barcode = data.Text;
 
-            // Логика для получения данных на основе inputText
             string cartridge_name = get_cartridge(barcode);
             if (cartridge_name == "0") { return new JsonResult(""); }
             var resultData = GetDataBasedOnInput(cartridge_name);
@@ -82,7 +81,6 @@ namespace Cart_Inventory.Pages
 
         private List<Return_Data> GetDataBasedOnInput(string inputText) //ОБРАБОТКА ПРИ ВВОДЕ В ТЕКСТОВЫЙ БЛОК
         {
-            // Пример данных для демонстрации
             return new List<Return_Data>
             {
                 new Return_Data { name = inputText }
@@ -134,7 +132,7 @@ namespace Cart_Inventory.Pages
         {
             try
             {
-                string sqlExpression = "SELECT barcode, model FROM cartridges";
+                string sqlExpression = "SELECT barcode, model, id FROM cartridges";
 
                 using (var connection = new MySqlConnection(sql_connection()))
                 {
@@ -151,7 +149,7 @@ namespace Cart_Inventory.Pages
                                 string[] tmp = reader.GetString(0).Split(",");
                                 foreach (string s in tmp)
                                 {
-                                    if (s == barcode) return reader.GetString(1);
+                                    if (s == barcode) return reader.GetValue(2).ToString() + " - " + reader.GetString(1);
                                 }
                             }
                             return "0";

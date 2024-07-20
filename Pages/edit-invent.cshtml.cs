@@ -92,7 +92,7 @@ namespace Cart_Inventory.Pages
             string barcode = data.Text;
 
             // Логика для получения данных на основе inputText
-            string cartridge_name = get_cartridge(barcode);
+            string cartridge_name = get_cartridge_by_barcode(barcode);
             if (cartridge_name == "0") { return new JsonResult(""); }
             var resultData = GetDataBasedOnInput(cartridge_name);
 
@@ -108,11 +108,11 @@ namespace Cart_Inventory.Pages
             };
         }
 
-        private string get_cartridge(string barcode) //ПОЛУЧЕНИЕ МОДЕЛИ КАРТРИДЖА ПО ШТРИХКОДУ
+        private string get_cartridge_by_barcode(string barcode) //ПОЛУЧЕНИЕ МОДЕЛИ КАРТРИДЖА ПО ШТРИХКОДУ
         {
             try
             {
-                string sqlExpression = "SELECT barcode, model FROM cartridges";
+                string sqlExpression = "SELECT barcode, model, id FROM cartridges";
 
                 using (var connection = new MySqlConnection(sql_connection()))
                 {
@@ -129,7 +129,7 @@ namespace Cart_Inventory.Pages
                                 string[] tmp = reader.GetString(0).Split(",");
                                 foreach (string s in tmp)
                                 {
-                                    if (s == barcode) return reader.GetString(1);
+                                    if (s == barcode) return reader.GetValue(2).ToString() + " - " + reader.GetString(1);
                                 }
                             }
                             return "0";
@@ -141,6 +141,39 @@ namespace Cart_Inventory.Pages
             catch (Exception ex)
             {
                 return "0";
+            }
+        }
+
+        string get_cartridge_by_id(string id) //ПОЛУЧЕНИЕ НАИМЕНОВАНИЯ КАРТРИДЖА ПО ID
+        {
+            try
+            {
+                string sqlExpression = "SELECT model FROM cartridges WHERE id=?id";
+
+                using (var connection = new MySqlConnection(sql_connection()))
+                {
+                    connection.Open();
+
+                    using var command = new MySqlCommand(sqlExpression, connection);
+                    command.Parameters.AddWithValue("?id", id);
+
+                    using var reader = command.ExecuteReader();
+                    {
+                        if (reader.HasRows) // если есть данные
+                        {
+                            while (reader.Read())   // построчно считываем данные
+                            {
+                                return reader.GetString(0);
+                            }
+                            return "No data";
+                        }
+                        else return "No data";
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                return ex.ToString();
             }
         }
 
@@ -170,7 +203,7 @@ namespace Cart_Inventory.Pages
                         foreach (string s in tmp1)
                         {
                             string[] tmp2 = s.Split("/");
-                            dt.Rows.Add(tmp2[0], tmp2[1]);
+                            dt.Rows.Add(tmp2[0] + " - " + get_cartridge_by_id(tmp2[0]), tmp2[1]);
                         }
                     }
 

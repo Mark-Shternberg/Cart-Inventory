@@ -53,28 +53,31 @@
     <thead>
         <tr>
             <th>Id</th>
-            <th>Model</th>
-            <th>Barcode</th>
+            <th>Priner name</th>
+            <th>Linked cartridges</th>
             <th></th>
         </tr>
     </thead>
     <tbody>
         @if(Model.main_table != null)
         {
-            @foreach (var items in @Model.main_table!)
+            @foreach (var printer in @Model.main_table!)
             {
                 <tr>
-                    <td>@items.id</td>
-                    <td>@items.name</td>
+                    <td>@printer.id</td>
                     <td>
-                        @foreach (var cart in items.cartridges.Split(',')!)
+                        <a id="printer_old_@printer.id">@printer.name</a>
+                        <input hidden name="model" id="printer_new_@printer.id" value="@printer.name">
+                    </td>
+                    <td>
+                        @foreach (var cart in printer.cartridges.Split(',')!)
                         {
                             @cart <br />
                         }
                     </td>
                     <td>
                         <form asp-page-handler="Delete_printer" method="post">
-                            <input type="hidden" name="id" value="@items.id">
+                            <input type="hidden" name="id" value="@printer.id">
                             <button type="submit" class="btn btn-delete">Delete</button>
                         </form>
                     </td>
@@ -123,7 +126,8 @@
         let rawData = [];
 
         for (let i = 0, row; row = tableBody.rows[i]; i++) {
-            rawData.push(row.cells[0].innerText);
+            let cartridgeID = row.cells[0].innerText.split(" - ")[0];
+            rawData.push(cartridgeID);
         }
 
         let rawTableInput = document.getElementById("raw_table");

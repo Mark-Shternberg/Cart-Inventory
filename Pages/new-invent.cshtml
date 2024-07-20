@@ -28,10 +28,6 @@
 
                 var tableBody = document.getElementById("Carts_Table_Body");
 
-                // Очистка текущего содержимого таблицы
-                //var tableBody = document.getElementById("resultTableBody");
-                //tableBody.innerHTML = "";
-
                 // Заполнение таблицы новыми данными
                 data.forEach(item => {
                     updateTable(item.name);
@@ -46,7 +42,8 @@
             let rawData = [];
 
             for (let i = 0, row; row = tableBody.rows[i]; i++) {
-                let cell1 = row.cells[0].innerText;
+                let cartridgeID = row.cells[0].innerText.split(" - ")[0];
+                let cell1 = cartridgeID;
                 let cell2 = row.cells[1].innerText;
                 rawData.push(cell1 + "/" + cell2);
             }
