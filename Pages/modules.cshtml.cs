@@ -130,7 +130,14 @@ namespace Cart_Inventory.Pages
 
             string invent_difference(int column, int row, string count) //РАЗНИЦА МЕЖДУ ИНВЕНТАРИЗАЦИЯМИ
             {
-                string str_out = main_table.Rows[row][column - 1].ToString();
+                string[] tmp = main_table.Rows[row][column - 1].ToString().Split(" (");
+                string str_out = "";
+
+
+                if (tmp.Count() > 0) str_out = tmp[0];
+                else str_out = main_table.Rows[row][column - 1].ToString();
+
+                if (str_out == "") str_out = "0";
 
                 if (column > 2)
                 {
@@ -139,19 +146,14 @@ namespace Cart_Inventory.Pages
                         main_table.Rows[row][column - 1] = "0";
                     }
                     int old_count = Convert.ToInt32(count);
-                    int new_count;
 
-                    string[] tmp = main_table.Rows[row][column - 1].ToString().Split(" (");
-                    if (tmp.Count() > 1) { new_count = Convert.ToInt32(tmp[0]); }
-                    else { new_count = Convert.ToInt32(main_table.Rows[row][column - 1]); }
-
-                    int difference = new_count - old_count;
+                    int difference = Convert.ToInt32(str_out) - old_count;
                     string str_difference;
                     if (difference > 0) str_difference = "+" + difference;
                     else if (difference == 0) return str_out;
                     else str_difference = difference.ToString();
 
-                    str_out = main_table.Rows[row][column - 1].ToString() + " (" + str_difference + ")";
+                    str_out = str_out + " (" + str_difference + ")";
                 }
 
                 return str_out;

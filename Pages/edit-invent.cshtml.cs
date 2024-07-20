@@ -2,7 +2,9 @@
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using MySqlConnector;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using System.Data;
+using System.Reflection;
 using System.Reflection.PortableExecutable;
 using static Cart_Inventory.Pages.new_inventModel;
 using static Cart_Inventory.Pages.printersModel;
@@ -83,7 +85,7 @@ namespace Cart_Inventory.Pages
                             string table = "";
                             if (reader.GetInt32(2) == 0) table = "Картриджи";
                             else table = "Модули";
-                            all_invents.Add(reader.GetInt32(0) + " - " + reader.GetString(1) + " - " + table);
+                            all_invents.Add(reader.GetValue(0).ToString() + " - " + reader.GetString(1) + " - " + table);
                         }
                     }
                 }
@@ -327,6 +329,15 @@ namespace Cart_Inventory.Pages
             loadInvents();
             loadCartridges();
             return Page();
+        }
+
+        public IActionResult OnGetGetAllInventories()
+        {
+            loadInvents();
+            loadCartridges();
+            var inventories = all_invents;
+            inventories.Reverse();
+            return new JsonResult(inventories);
         }
     }
 }

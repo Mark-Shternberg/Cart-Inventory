@@ -134,7 +134,7 @@ namespace Cart_Inventory.Pages
                 string str_out = "";
 
 
-                if (tmp.Count() > 1) str_out = tmp[0];
+                if (tmp.Count() > 0) str_out = tmp[0];
                 else str_out = main_table.Rows[row][column - 1].ToString();
 
                 if (str_out == "") str_out = "0";
@@ -153,7 +153,7 @@ namespace Cart_Inventory.Pages
                     else if (difference == 0) return str_out;
                     else str_difference = difference.ToString();
 
-                    str_out = main_table.Rows[row][column - 1].ToString() + " (" + str_difference + ")";
+                    str_out = str_out + " (" + str_difference + ")";
                 }
 
                 return str_out;

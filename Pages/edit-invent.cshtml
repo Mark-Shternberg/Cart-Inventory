@@ -212,7 +212,7 @@
             });
 
             if (response.ok) {
-                updateRawTable();
+                await updateInventoryList();
             } else {
                 console.error("Failed to fetch data:", response.statusText);
             }
@@ -220,6 +220,34 @@
             console.error("Error:", error);
         }
     });
+
+    async function updateInventoryList() {
+        try {
+            const response = await fetch('@Url.Page("/edit-invent", new { handler = "GetAllInventories" })', {
+                method: 'GET',
+                headers: {
+                    'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                }
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                var select = document.getElementById("all_invents");
+                select.innerHTML = ""; // очистка текущего содержимого select
+
+                data.forEach(item => {
+                    var option = document.createElement("option");
+                    option.value = item;
+                    option.text = item;
+                    select.appendChild(option);
+                });
+            } else {
+                console.error("Failed to fetch inventory list:", response.statusText);
+            }
+        } catch (error) {
+            console.error("Error:", error);
+        }
+    }
 
     document.getElementById("add_cartridge_btn").addEventListener("click", async function (event) {
         event.preventDefault(); // Предотвращаем отправку формы
