@@ -11,7 +11,8 @@ namespace Cart_Inventory.Pages
         public static string DataTableToHTML(DataTable dt) //КОВЕРТАЦИЯ ТАбЛИЦЫ В HTML
         {
             string html = "<table class=\"table\">";
-            //add header row
+            
+            // HEADERS
             html += "<tr>";
             for (int i = 0; i < dt.Columns.Count; i++)
                 if (i==2)
@@ -20,7 +21,8 @@ namespace Cart_Inventory.Pages
                 }
                 else html += "<td style=\"min-width: 100px;\">" + dt.Columns[i].ColumnName + "</td>";
             html += "</tr>";
-            //add rows
+            
+            // ROWS
             string cell;
             string[] tmp;
             int count;
@@ -34,20 +36,20 @@ namespace Cart_Inventory.Pages
                         cell = dt.Rows[i][j].ToString();
                         tmp = cell.Split(" (");
                         count = Convert.ToInt32(tmp[0]);
-                        if (j == 2)
+                        if (j == 2) // FIRST INVENTORY COLUMN
                         {
                             if (count == 0) html += "<td style=\"min-width: 100px;border-right-width: 4px;border-left-width: 4px; " +
                                     "border-color: dimgray; background-color: salmon;border-bottom-color: #dee2e6;border-top-color: #dee2e6;\">" + dt.Rows[i][j].ToString() + "</td>";
                             else if (count < 3) html += "<td style=\"min-width: 100px;border-right-width: 4px;border-left-width: 4px; " +
                                     "border-color: dimgray; background-color: khaki;border-bottom-color: #dee2e6;border-top-color: #dee2e6;\">" + dt.Rows[i][j].ToString() + "</td>";
                             else html += "<td style=\"min-width: 100px;border-right-width: 4px;border-left-width: 4px; " +
-                                    "border-color: dimgray;border-bottom-color: #dee2e6;border-top-color: #dee2e6;\">" + dt.Rows[i][j].ToString() + "</td>";
+                                    "border-color: dimgray;border-bottom-color: #dee2e6;border-top-color: #dee2e6;background-color: darkseagreen;\">" + dt.Rows[i][j].ToString() + "</td>";
                         }
                         else
                         {
                             if (count == 0) html += "<td style=\"min-width: 100px; background-color: salmon;\">" + dt.Rows[i][j].ToString() + "</td>";
                             else if (count < 3) html += "<td style=\"min-width: 100px; background-color: khaki;\">" + dt.Rows[i][j].ToString() + "</td>";
-                            else html += "<td style=\"min-width: 100px;\">" + dt.Rows[i][j].ToString() + "</td>";
+                            else html += "<td style=\"min-width: 100px;background-color: darkseagreen;\">" + dt.Rows[i][j].ToString() + "</td>";
                         }
                     }
                     else html += "<td style=\"min-width: 100px;\">" + dt.Rows[i][j].ToString() + "</td>";

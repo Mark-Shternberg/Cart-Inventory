@@ -4,36 +4,53 @@
     ViewData["Title"] = "All cartridges/modules";
 }
 
-<div style="text-align: center;">
+<div class="add-item-block" style="text-align: center;">
     <form asp-page-handler="Add_new_model" method="post" id="main_form">
         <input name="name" type="text" placeholder="Model name" />
         <input name="barcode" type="text" placeholder="Barcode" />
+        <input type="number" name="yellow_zone" placeholder="Yellow zone*">
         <button type="submit" class="btn btn-save">Add new model</button>
     </form>
+    <a>* The value below which the cartridge will be marked yellow</a>
 </div>
 
 <table class="table">
     <thead>
         <tr>
-            <th>Id
-            <th>Model
-            <th>Barcode
-            <th>
+            <th>Id</th>
+            <th>Model</th>
+            <th>Barcode</th>
+            <th>Yellow zone</th>
+            <th></th>
         </tr>
     </thead>
     <tbody>
-        @if(Model.main_table != null)
+        @if (Model.main_table != null)
         {
-            @foreach (var items in @Model.main_table!)
+            @foreach (var item in Model.main_table)
             {
-                <tr>
-                    <td>@items.id</td>
-                    <td>@items.model</td>
-                    <td>@items.barcode</td>
+                <tr id="row_@item.id">
+                    <td>@item.id</td>
                     <td>
-                        <form asp-page-handler="Delete_module" method="post">
-                            <input hidden name="id" value="@items.id">
-                            <button type="submit" class="btn btn-delete">Delete</button>
+                        <a id="model_old_@item.id">@item.model</a>
+                        <input hidden name="model" id="model_new_@item.id" value="@item.model">
+                    </td>
+                    <td>
+                        <a id="barcode_old_@item.id">@item.barcode</a>
+                        <input hidden name="barcode" id="barcode_new_@item.id" value="@item.barcode">
+                    </td>
+                    <td>
+                        <a id="yellow_zone_old_@item.id">@item.yellow_zone</a>
+                        <input hidden type="number" name="yellow_zone" id="yellow_zone_new_@item.id" value="@item.yellow_zone">
+                    </td>
+                    <td style="display: flex">
+                        <button type="button" class="btn btn-edit" data-id="@item.id" style="margin-right: 10px;">Edit</button>
+                        @Html.AntiForgeryToken()
+                        <button hidden type="button" class="btn btn-save" data-id="@item.id" style="margin-right: 10px;">Save</button>
+                        <button hidden type="button" class="btn btn-default" data-id="@item.id" style="margin-right: 10px;">Cancel</button>
+                        <form asp-page-handler="Delete_module" method="post" style="margin: 0;">
+                            <input hidden name="id" value="@item.id">
+                            <button type="submit" data-id="@item.id" class="btn btn-delete">Delete</button>
                         </form>
                     </td>
                 </tr>
@@ -41,3 +58,95 @@
         }
     </tbody>
 </table>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            document.querySelectorAll('.btn-edit').forEach(button => {
+                button.addEventListener('click', function () {
+                    let rowId = this.getAttribute('data-id');
+                    let row = document.getElementById('row_' + rowId);
+
+                    row.querySelector('#model_old_' + rowId).hidden = true;
+                    row.querySelector('#barcode_old_' + rowId).hidden = true;
+                    row.querySelector('#yellow_zone_old_' + rowId).hidden = true;
+
+                    row.querySelector('#model_new_' + rowId).hidden = false;
+                    row.querySelector('#barcode_new_' + rowId).hidden = false;
+                    row.querySelector('#yellow_zone_new_' + rowId).hidden = false;
+
+                    this.hidden = true;
+                    row.querySelector('.btn-save[data-id="' + rowId + '"]').hidden = false;
+                    row.querySelector('.btn-default[data-id="' + rowId + '"]').hidden = false;
+                    row.querySelector('.btn-delete[data-id="' + rowId + '"]').hidden = true;
+                });
+            });
+
+            document.querySelectorAll('.btn-save').forEach(button => {
+                button.addEventListener('click', async function () {
+                    let rowId = this.getAttribute('data-id');
+                    let row = document.getElementById('row_' + rowId);
+
+                    let model = row.querySelector('#model_new_' + rowId).value;
+                    let barcode = row.querySelector('#barcode_new_' + rowId).value;
+                    let yellowZone = row.querySelector('#yellow_zone_new_' + rowId).value;
+
+                    let response = await await fetch('/all-parts?handler=Edit_module', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                        },
+                        body: JSON.stringify({
+                            id: rowId,
+                            name: model,
+                            barcode: barcode,
+                            yellow_zone: yellowZone
+                        })
+                    });
+
+                    if (response.ok) {
+                        row.querySelector('#model_old_' + rowId).hidden = false;
+                        row.querySelector('#barcode_old_' + rowId).hidden = false;
+                        row.querySelector('#yellow_zone_old_' + rowId).hidden = false;
+
+                        row.querySelector('#model_old_' + rowId).textContent = model;
+                        row.querySelector('#barcode_old_' + rowId).textContent = barcode;
+                        row.querySelector('#yellow_zone_old_' + rowId).textContent = yellowZone;
+
+                        row.querySelector('#model_new_' + rowId).hidden = true;
+                        row.querySelector('#barcode_new_' + rowId).hidden = true;
+                        row.querySelector('#yellow_zone_new_' + rowId).hidden = true;
+
+                        this.hidden = true;
+                        row.querySelector('.btn-edit[data-id="' + rowId + '"]').hidden = false;
+                        row.querySelector('.btn-default[data-id="' + rowId + '"]').hidden = true;
+                        row.querySelector('.btn-delete[data-id="' + rowId + '"]').hidden = false;
+                    } else {
+                        alert('Error while saving changes.');
+                    }
+                });
+            });
+
+            document.querySelectorAll('.btn-default').forEach(button => {
+                button.addEventListener('click', async function () {
+                    let rowId = this.getAttribute('data-id');
+                    let row = document.getElementById('row_' + rowId);
+
+                    row.querySelector('#model_old_' + rowId).hidden = false;
+                    row.querySelector('#barcode_old_' + rowId).hidden = false;
+                    row.querySelector('#yellow_zone_old_' + rowId).hidden = false;
+
+                    row.querySelector('#model_new_' + rowId).hidden = true;
+                    row.querySelector('#barcode_new_' + rowId).hidden = true;
+                    row.querySelector('#yellow_zone_new_' + rowId).hidden = true;
+
+                    this.hidden = true;
+                    row.querySelector('.btn-edit[data-id="' + rowId + '"]').hidden = false;
+                    row.querySelector('.btn-save[data-id="' + rowId + '"]').hidden = true;
+                    row.querySelector('.btn-delete[data-id="' + rowId + '"]').hidden = false;
+                });
+            });
+        });
+    </script>
+}

@@ -34,12 +34,22 @@ namespace Cart_Inventory.Pages
             public string? id { get; set; }
             public string? model { get; set; }
             public string? barcode { get; set; }
+            public string? yellow_zone { get; set; }
         }
 
         public class new_model
         { 
             public string? name { get; set; }
             public string? barcode { get; set; }
+            public string? yellow_zone { get; set; }
+        }
+
+        public class update_model
+        {
+            public string? id { get; set; }
+            public string? name { get; set; }
+            public string? barcode { get; set; }
+            public string? yellow_zone { get; set; }
         }
 
         public class delete_module
@@ -78,7 +88,7 @@ namespace Cart_Inventory.Pages
         {
             try
             {
-                string sqlExpression = "INSERT INTO cartridges (model, barcode) VALUES (?model, ?barcode)";
+                string sqlExpression = "INSERT INTO cartridges (model, barcode, yellow_zone) VALUES (?model, ?barcode, ?yellow_zone)";
 
                 using (var connection = new MySqlConnection(sql_connection()))
                 {
@@ -110,6 +120,17 @@ namespace Cart_Inventory.Pages
                         command.Parameters.AddWithValue("?barcode", model.barcode);
                     }
                     else error++;
+                    //---------------------------------------------------
+
+                    //--------------------ЖЁЛТАЯ ЗОНА----------------------
+                    if (!string.IsNullOrWhiteSpace(model.yellow_zone))
+                    {
+                        command.Parameters.AddWithValue("@yellow_zone", model.yellow_zone);
+                    }
+                    else
+                    {
+                        error++;
+                    }
                     //---------------------------------------------------
 
                     //---------ЗАПИСЬ И ВЫХОД------------
@@ -163,6 +184,80 @@ namespace Cart_Inventory.Pages
             }
             LoadMainTable();
             return Page();
+        }
+
+        public IActionResult OnPostEdit_module([FromBody] update_model model) //ОБРАБОТКА ПРИ РЕДАКТИРОВАНИИ МОДЕЛИ
+        {
+            try
+            {
+                string sqlExpression = "UPDATE cartridges SET model=@model, barcode=@barcode, yellow_zone=@yellow_zone WHERE id=@id";
+
+                using (var connection = new MySqlConnection(sql_connection()))
+                {
+                    connection.Open();
+
+                    using var command = new MySqlCommand(sqlExpression, connection);
+
+                    int error = 0;
+
+                    //---------------НАИМЕНОВАНИЕ КАРТРИДЖА------------------
+                    if (!string.IsNullOrWhiteSpace(model.name) && !model.name.Contains("/") && !model.name.Contains(","))
+                    {
+                        string model_name = model.name.Trim(); // Удаление пробела в начале и конце
+                        model_name = Regex.Replace(model_name, @"\s+", " "); // Замена множества пробелов на один
+
+                        command.Parameters.AddWithValue("@model", model_name);
+                    }
+                    else
+                    {
+                        error++;
+                    }
+                    //---------------------------------------------------
+
+                    //---------------------ШТРИХ-КОД-----------------------
+                    if (!string.IsNullOrWhiteSpace(model.barcode))
+                    {
+                        command.Parameters.AddWithValue("@barcode", model.barcode);
+                    }
+                    else
+                    {
+                        error++;
+                    }
+                    //---------------------------------------------------
+
+                    //--------------------ЖЁЛТАЯ ЗОНА----------------------
+                    if (!string.IsNullOrWhiteSpace(model.yellow_zone))
+                    {
+                        command.Parameters.AddWithValue("@yellow_zone", model.yellow_zone);
+                    }
+                    else
+                    {
+                        error++;
+                    }
+                    //---------------------------------------------------
+
+                    // Добавление id параметра
+                    command.Parameters.AddWithValue("@id", model.id);
+
+                    // Проверка ошибок и выполнение команды
+                    if (error == 0)
+                    {
+                        command.ExecuteNonQuery();
+                    }
+                    else
+                    {
+                        return new JsonResult(new { success = false, message = "Validation failed" });
+                    }
+                }
+
+                LoadMainTable();
+                return new JsonResult(new { success = true });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.ToString());
+                return new JsonResult(new { success = false, message = ex.Message });
+            }
         }
     }
 }
