@@ -4,7 +4,8 @@
     ViewData["Title"] = "Printers";
 }
 
-<h3 style="text-align:center;">Printer models that use inventory cartridges</h3><br />
+<h3 style="text-align:center;">Printer models that use inventory cartridges</h3>
+<br />
 
 <div class="add-item-block">
     <form asp-page-handler="Add_new_printer" method="post" id="main_form">
@@ -39,7 +40,7 @@
                                 </thead>
                                 <tbody id="linked_cartridges_table_body"></tbody>
                             </table>
-                        <input hidden name="raw_table" id="raw_table">
+                            <input hidden name="raw_table" id="raw_table">
                         </td>
                     </tr>
                 </tbody>
@@ -53,13 +54,13 @@
     <thead>
         <tr>
             <th>Id</th>
-            <th>Priner name</th>
+            <th>Printer name</th>
             <th>Linked cartridges</th>
             <th></th>
         </tr>
     </thead>
     <tbody>
-        @if(Model.main_table != null)
+        @if (Model.main_table != null)
         {
             @foreach (var printer in @Model.main_table!)
             {
@@ -70,16 +71,51 @@
                         <input hidden name="model" id="printer_new_@printer.id" value="@printer.name">
                     </td>
                     <td>
-                        @foreach (var cart in printer.cartridges.Split(',')!)
-                        {
-                            @cart <br />
-                        }
+                        <div style="width: 500px;display: flex;flex-direction: column;align-items: flex-start;">
+                            <table class="table" style="border-color: white">
+                                <tbody id="linked_cartridges_table_body_old_@printer.id" style="border-style: hidden;">
+                                    @foreach (var cart in printer.cartridges.Split(',')!)
+                                    {
+                                        <tr>
+                                            <td>@cart</td>
+                                            <td><button hidden type="button" class="btn btn-delete unlink-btn" data-printer-id="@printer.id" data-cartridge="@cart">Unlink</button></td>
+                                        </tr>
+                                    }
+                                </tbody>
+                                <tbody hidden id="linked_cartridges_table_body_@printer.id">
+                                    @foreach (var cart in printer.cartridges.Split(',')!)
+                                    {
+                                        <tr>
+                                            <td>@cart</td>
+                                            <td><button hidden type="button" class="btn btn-delete unlink-btn" data-printer-id="@printer.id" data-cartridge="@cart">Unlink</button></td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                            <input hidden name="raw_table" id="raw_table_@printer.id">
+
+                            <select hidden id="select_cartridges_@printer.id" name="cartridges">
+                                @foreach (var cartridge in Model.all_cartridges)
+                                {
+                                    <option value="@cartridge">@cartridge</option>
+                                }
+                            </select>
+                            <button hidden type="button" class="btn btn-default link-cartridge-btn" data-printer-id="@printer.id" style="margin-top: 10px;width: 300px;">
+                                Link cartridge to printer
+                            </button>
+                        </div>
                     </td>
-                    <td>
-                        <form asp-page-handler="Delete_printer" method="post">
-                            <input type="hidden" name="id" value="@printer.id">
-                            <button type="submit" class="btn btn-delete">Delete</button>
-                        </form>
+                    <td style="vertical-align: middle;">
+                        <div style="display: flex">
+                            <button type="button" class="btn btn-edit" data-id="@printer.id" style="margin-right: 10px;">Edit</button>
+                            <form asp-page-handler="Delete_printer" method="post">
+                                <input type="hidden" name="id" value="@printer.id">
+                                <button type="submit" class="btn btn-delete" data-id="@printer.id">Delete</button>
+                            </form>
+                            <button hidden type="button" class="btn btn-default btn-cancel" data-id="@printer.id" style="margin-right: 10px;">Cancel</button>
+                            @Html.AntiForgeryToken()
+                            <button hidden type="button" class="btn btn-save btn-save-edit" data-id="@printer.id" style="margin-right: 10px;">Save</button>
+                        </div>
                     </td>
                 </tr>
             }
@@ -89,7 +125,7 @@
 
 <script>
     document.getElementById("link_cartridge_btn").addEventListener("click", function (event) {
-        event.preventDefault(); // Предотвращаем отправку формы
+        event.preventDefault(); // Prevent form submission
 
         var select = document.getElementById("cartridges");
         var selectedOption = select.options[select.selectedIndex];
@@ -115,11 +151,69 @@
             };
             cell2.appendChild(deleteButton);
 
-            select.remove(select.selectedIndex); // Удаляем выбранный элемент из блока select
+            select.remove(select.selectedIndex); // Remove selected item from select
 
             updateRawTable();
         }
     });
+
+    document.querySelectorAll('.btn-save-edit').forEach(button => {
+        button.addEventListener('click', async function () {
+            let printer_id = this.getAttribute('data-id');
+
+            let printer_name = document.getElementById(`printer_new_${printer_id}`).value;
+            let printer_cartridges = document.getElementById(`raw_table_${printer_id}`).value;
+
+            let response = await await fetch('/printers?handler=Edit_printer', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                },
+                body: JSON.stringify({
+                    id: printer_id,
+                    name: printer_name,
+                    cartridges: printer_cartridges
+                })
+            });
+
+            if (response.ok) {
+                document.getElementById(`printer_old_${printer_id}`).hidden = false;
+                document.getElementById(`printer_new_${printer_id}`).hidden = true;
+                document.querySelector(`.btn-edit[data-id="${printer_id}"]`).hidden = false;
+                document.querySelector(`.btn-default[data-id="${printer_id}"]`).hidden = true;
+                document.querySelector(`.btn-save[data-id="${printer_id}"]`).hidden = true;
+                this.hidden = true;
+                document.querySelector(`.btn-delete[data-id="${printer_id}"]`).hidden = false;
+                document.getElementById(`select_cartridges_${printer_id}`).hidden = true;
+                document.querySelector(`.link-cartridge-btn[data-printer-id="${printer_id}"]`).hidden = true;
+                document.getElementById(`linked_cartridges_table_body_${printer_id}`).hidden = true;
+                document.getElementById(`linked_cartridges_table_body_old_${printer_id}`).hidden = false;
+
+                document.querySelectorAll(`.unlink-btn[data-printer-id="${printer_id}"]`).forEach(btn => btn.hidden = true);
+
+                copyTbody(`linked_cartridges_table_body_${printer_id}`, `linked_cartridges_table_body_old_${printer_id}`);
+            } else {
+                alert('Error while saving changes.');
+            }
+        });
+    });
+
+    function copyTbody(sourceId, destinationId) {
+        // Получаем ссылки на элементы tbody
+        var sourceTbody = document.getElementById(sourceId);
+        var destinationTbody = document.getElementById(destinationId);
+
+        // Очистить destinationTbody перед вставкой
+        destinationTbody.innerHTML = '';
+
+        // Копируем строки по отдельности
+        var rows = sourceTbody.getElementsByTagName('tr');
+        for (var i = 0; i < rows.length; i++) {
+            var newRow = rows[i].cloneNode(true);
+            destinationTbody.appendChild(newRow);
+        }
+    }
 
     function updateRawTable() {
         let tableBody = document.getElementById("linked_cartridges_table_body");
@@ -133,4 +227,125 @@
         let rawTableInput = document.getElementById("raw_table");
         rawTableInput.value = rawData.join(",");
     }
+
+    function updateRawTable_ForEdit(printerId) {
+        let tableBody = document.getElementById(`linked_cartridges_table_body_${printerId}`);
+        let rawData = [];
+
+        for (let i = 0, row; row = tableBody.rows[i]; i++) {
+            let cartridgeID = row.cells[0].innerText.split(" - ")[0];
+            rawData.push(cartridgeID);
+        }
+
+        let rawTableInput = document.getElementById(`raw_table_${printerId}`);
+        rawTableInput.value = rawData.join(",");
+    }
+
+    document.querySelectorAll('.btn-edit').forEach(button => {
+        button.addEventListener('click', function () {
+            let id = this.getAttribute('data-id');
+
+            document.getElementById(`printer_old_${id}`).hidden = true;
+            document.getElementById(`printer_new_${id}`).hidden = false;
+            document.querySelector(`.btn-save[data-id="${id}"]`).hidden = false;
+            document.querySelector(`.btn-default[data-id="${id}"]`).hidden = false;
+            this.hidden = true;
+            document.querySelector(`.btn-delete[data-id="${id}"]`).hidden = true;
+            document.getElementById(`select_cartridges_${id}`).hidden = false;
+            document.querySelector(`.link-cartridge-btn[data-printer-id="${id}"]`).hidden = false;
+            document.getElementById(`linked_cartridges_table_body_${id}`).hidden = false;
+            document.getElementById(`linked_cartridges_table_body_old_${id}`).hidden = true;
+
+            document.querySelectorAll(`.unlink-btn[data-printer-id="${id}"]`).forEach(btn => btn.hidden = false);
+
+            // Remove cartridges that are already linked from the select options
+            let tableBody = document.getElementById(`linked_cartridges_table_body_${id}`);
+            let select = document.getElementById(`select_cartridges_${id}`);
+            for (let i = 0; i < tableBody.rows.length; i++) {
+                let cartridge = tableBody.rows[i].cells[0].innerText;
+                for (let j = 0; j < select.options.length; j++) {
+                    if (select.options[j].value === cartridge) {
+                        select.remove(j);
+                        break;
+                    }
+                }
+            }
+            updateRawTable_ForEdit(id);
+        });
+    });
+
+    document.querySelectorAll('.btn-cancel').forEach(button => {
+        button.addEventListener('click', function () {
+            let id = this.getAttribute('data-id');
+            document.getElementById(`printer_old_${id}`).hidden = false;
+            document.getElementById(`printer_new_${id}`).hidden = true;
+            document.querySelector(`.btn-edit[data-id="${id}"]`).hidden = false;
+            document.querySelector(`.btn-default[data-id="${id}"]`).hidden = true;
+            document.querySelector(`.btn-save[data-id="${id}"]`).hidden = true;
+            this.hidden = true;
+            document.querySelector(`.btn-delete[data-id="${id}"]`).hidden = false;
+            document.getElementById(`select_cartridges_${id}`).hidden = true;
+            document.querySelector(`.link-cartridge-btn[data-printer-id="${id}"]`).hidden = true;
+            document.getElementById(`linked_cartridges_table_body_${id}`).hidden = true;
+            document.getElementById(`linked_cartridges_table_body_old_${id}`).hidden = false;
+
+            document.querySelectorAll(`.unlink-btn[data-printer-id="${id}"]`).forEach(btn => btn.hidden = true);
+        });
+    });
+
+    document.querySelectorAll('.unlink-btn').forEach(button => {
+        button.addEventListener('click', function () {
+            let id = this.getAttribute('data-printer-id');
+            let cartridge = this.getAttribute('data-cartridge');
+            let select = document.getElementById(`select_cartridges_${id}`);
+            let option = document.createElement("option");
+            option.value = cartridge;
+            option.text = cartridge;
+            select.add(option);
+
+            let tableBody = document.getElementById(`linked_cartridges_table_body_${id}`);
+            for (let i = 0; i < tableBody.rows.length; i++) {
+                if (tableBody.rows[i].cells[0].innerText === cartridge) {
+                    tableBody.deleteRow(i);
+                    break;
+                }
+            }
+            updateRawTable_ForEdit(id);
+        });
+    });
+
+    document.querySelectorAll('.link-cartridge-btn').forEach(button => {
+        button.addEventListener('click', function () {
+            let id = this.getAttribute('data-printer-id');
+            let select = document.getElementById(`select_cartridges_${id}`);
+            let selectedOption = select.options[select.selectedIndex];
+
+            if (selectedOption) {
+                var tableBody = document.getElementById(`linked_cartridges_table_body_${id}`);
+                var newRow = tableBody.insertRow();
+
+                var cell1 = newRow.insertCell(0);
+                cell1.textContent = selectedOption.text;
+
+                var cell2 = newRow.insertCell(1);
+                var deleteButton = document.createElement("button");
+                deleteButton.textContent = "Unlink";
+                deleteButton.classList.add("btn", "btn-delete");
+                deleteButton.classList.add("unlink-btn");
+                deleteButton.setAttribute("data-printer-id", id);
+                deleteButton.setAttribute("data-cartridge", selectedOption.text);
+                deleteButton.onclick = function () {
+                    tableBody.deleteRow(newRow.rowIndex - 1);
+                    var option = document.createElement("option");
+                    option.text = selectedOption.text;
+                    option.value = selectedOption.value;
+                    select.add(option);
+                };
+                cell2.appendChild(deleteButton);
+
+                select.remove(select.selectedIndex); // Remove selected item from select
+                updateRawTable_ForEdit(id);
+            }
+        });
+    });
 </script>

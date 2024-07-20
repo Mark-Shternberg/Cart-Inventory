@@ -59,6 +59,13 @@ namespace Cart_Inventory.Pages
             public string? id { get; set; }
         }
 
+        public class update_printer
+        {
+            public string? id { get; set; }
+            public string? name { get; set; }
+            public string? cartridges { get; set; }
+        }
+
 
         public List<main_table_model>? main_table { get; set; }
 
@@ -84,8 +91,8 @@ namespace Cart_Inventory.Pages
                     string cartridges = "";
                     foreach (string cartridge in tmp)
                     {
-                        if (cartridges == "") cartridges = get_cartridge(cartridge);
-                        else cartridges = cartridges + "," + get_cartridge(cartridge);
+                        if (cartridges == "") cartridges = cartridge + " - " + get_cartridge(cartridge);
+                        else cartridges = cartridges + "," + cartridge + " - " + get_cartridge(cartridge);
                     }
                     row[2] = cartridges; 
                 }
@@ -245,6 +252,69 @@ namespace Cart_Inventory.Pages
             LoadMainTable();
             loadCartridges();
             return Page();
+        }
+
+        public IActionResult OnPostEdit_printer([FromBody] update_printer model) //ОБРАБОТКА ПРИ РЕДАКТИРОВАНИИ ПРИНТЕРА
+        {
+            try
+            {
+                string sqlExpression = "UPDATE printers SET name=@name, cartridges=@cartridges WHERE id=@id";
+
+                using (var connection = new MySqlConnection(sql_connection()))
+                {
+                    connection.Open();
+
+                    using var command = new MySqlCommand(sqlExpression, connection);
+
+                    int error = 0;
+
+                    //---------------НАИМЕНОВАНИЕ ПРИНТЕРА------------------
+                    if (!string.IsNullOrWhiteSpace(model.name))
+                    {
+                        string model_name = model.name.Trim(); // Удаление пробела в начале и конце
+                        model_name = Regex.Replace(model_name, @"\s+", " "); // Замена множества пробелов на один
+
+                        command.Parameters.AddWithValue("@name", model_name);
+                    }
+                    else
+                    {
+                        error++;
+                    }
+                    //---------------------------------------------------
+
+                    //---------------------КАРТРИДЖИ-----------------------
+                    if (!string.IsNullOrWhiteSpace(model.cartridges))
+                    {
+                        command.Parameters.AddWithValue("@cartridges", model.cartridges);
+                    }
+                    else
+                    {
+                        error++;
+                    }
+                    //---------------------------------------------------
+
+                    // Добавление id параметра
+                    command.Parameters.AddWithValue("@id", model.id);
+
+                    // Проверка ошибок и выполнение команды
+                    if (error == 0)
+                    {
+                        command.ExecuteNonQuery();
+                    }
+                    else
+                    {
+                        return new JsonResult(new { success = false, message = "Validation failed" });
+                    }
+                }
+
+                LoadMainTable();
+                return new JsonResult(new { success = true });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.ToString());
+                return new JsonResult(new { success = false, message = ex.Message });
+            }
         }
     }
 }
