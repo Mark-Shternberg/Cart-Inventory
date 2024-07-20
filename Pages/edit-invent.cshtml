@@ -23,8 +23,19 @@
     </form>
 </div>
 
-<div id="input_new_cartridge" style="visibility:hidden;">
-    Add new cartridge/module: <input type="text" id="textInput" oninput="onTextInputChanged()" />
+<div class="add-item-block" id="input_new_cartridge" style="visibility:hidden; margin-top: 20px;">
+    Add new cartridge/module barcode: <input type="text" id="textInput" oninput="onTextInputChanged()" />
+
+    Or select manually:
+    <select id="cartridges" name="cartridges">
+        @foreach (var cartridge in Model.all_cartridges)
+        {
+            <option value="@cartridge">@cartridge</option>
+        }
+    </select>
+    <button type="button" class="btn btn-default" id="add_cartridge_btn">
+        Add
+    </button>
 </div>
 
 <table id="Invent_Table" class="table" style="visibility:hidden;">
@@ -208,6 +219,15 @@
         } catch (error) {
             console.error("Error:", error);
         }
+    });
+
+    document.getElementById("add_cartridge_btn").addEventListener("click", async function (event) {
+        event.preventDefault(); // Предотвращаем отправку формы
+
+        var select = document.getElementById("cartridges");
+        var selectedOption = select.options[select.selectedIndex];
+
+        updateTable(selectedOption.text);
     });
 
     document.getElementById("edit_cancel").addEventListener("click", async function (event) {

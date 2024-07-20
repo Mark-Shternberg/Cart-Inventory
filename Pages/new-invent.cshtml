@@ -1,99 +1,7 @@
 ﻿@page
 @model Cart_Inventory.Pages.new_inventModel
 @{
-    @using Microsoft.AspNetCore.Mvc;
-
     ViewData["Title"] = "New inventarisation";
-
-    <script>
-        async function onTextInputChanged() {
-            var inputText = document.getElementById("textInput").value;
-
-            // Выполнение AJAX-запроса к серверу
-            const response = await fetch('/new-invent?handler=OnTextInputChanged', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
-                },
-                body: JSON.stringify({ text: inputText })
-            });
-
-            if (response.ok) {
-                const data = await response.json();
-
-                if (data === "") {
-                    return; // Выход из функции, если ответ пустой
-                }
-
-                var tableBody = document.getElementById("Carts_Table_Body");
-
-                // Заполнение таблицы новыми данными
-                data.forEach(item => {
-                    updateTable(item.name);
-                });
-            } else {
-                console.error("Failed to fetch data:", response.statusText);
-            }
-        }
-
-        function updateRawTable() {
-            let tableBody = document.getElementById("Carts_Table_Body");
-            let rawData = [];
-
-            for (let i = 0, row; row = tableBody.rows[i]; i++) {
-                let cartridgeID = row.cells[0].innerText.split(" - ")[0];
-                let cell1 = cartridgeID;
-                let cell2 = row.cells[1].innerText;
-                rawData.push(cell1 + "/" + cell2);
-            }
-
-            let rawTableInput = document.getElementById("raw_table");
-            rawTableInput.value = rawData.join(",");
-        }
-
-        function updateTable(searchText) {
-            // Получаем таблицу по ID
-            var table = document.getElementById("Carts_Table_Body");
-            let found = false;
-
-            var inputText = document.getElementById("textInput");
-
-            // Проходим по всем строкам таблицы, начиная со второй (первая - заголовок)
-            for (let i = 0, row; row = table.rows[i]; i++) {
-                // Получаем значение первой ячейки текущей строки
-                let cellText = row.cells[0].innerText;
-
-                // Проверяем, совпадает ли текст
-                if (cellText === searchText) {
-                    // Увеличиваем значение во второй ячейке на 1
-                    let countCell = row.cells[1];
-                    countCell.innerText = parseInt(countCell.innerText) + 1;
-                    found = true;
-                    inputText.value = "";
-                    updateRawTable();
-                    break;
-                }
-            }
-
-            // Если совпадение не найдено, добавляем новую строку
-            if (!found) {
-                let newRow = table.insertRow();
-                let cell1 = newRow.insertCell(0);
-                let cell2 = newRow.insertCell(1);
-                let cell3 = newRow.insertCell(2);
-
-                cell1.innerHTML = searchText;
-                cell2.innerHTML = "1";
-                cell3.innerHTML = `
-                                        <button type="button" class="btn btn-delete" onclick="decrementCount(this)">-</button>
-                                        <button type="button" class="btn btn-save" onclick="incrementCount(this)">+</button>
-                                `;
-                inputText.value = "";
-                updateRawTable();
-            }
-        }
-    </script>
 }
 
 <div style="border-style:solid; border-width:1px; border-radius: 10px; padding: 10px; margin-bottom: 30px; text-align:center;">
@@ -117,7 +25,19 @@
                             </div>
                         </td>
                         <td>
+                            Select manually:
+                            <select id="cartridges" name="cartridges">
+                                @foreach (var cartridge in Model.all_cartridges)
+                                {
+                                    <option value="@cartridge">@cartridge</option>
+                                }
+                            </select>
+                            <button type="button" class="btn btn-default" id="add_cartridge_btn">
+                                Add
+                            </button>
                             @Html.AntiForgeryToken()
+                            <br />
+                            Or enter barcode:
                             <input type="text" id="textInput" placeholder="Barcode" oninput="onTextInputChanged()" />
                             <br />
                             <table id="Carts_Table" class="table">
@@ -142,6 +62,103 @@
 </div>
 
 <script>
+    async function onTextInputChanged() {
+        var inputText = document.getElementById("textInput").value;
+
+        // Выполнение AJAX-запроса к серверу
+        const response = await fetch('/new-invent?handler=OnTextInputChanged', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+            },
+            body: JSON.stringify({ text: inputText })
+        });
+
+        if (response.ok) {
+            const data = await response.json();
+
+            if (data === "") {
+                return; // Выход из функции, если ответ пустой
+            }
+
+            var tableBody = document.getElementById("Carts_Table_Body");
+
+            // Заполнение таблицы новыми данными
+            data.forEach(item => {
+                updateTable(item.name);
+            });
+        } else {
+            console.error("Failed to fetch data:", response.statusText);
+        }
+    }
+
+    function updateRawTable() {
+        let tableBody = document.getElementById("Carts_Table_Body");
+        let rawData = [];
+
+        for (let i = 0, row; row = tableBody.rows[i]; i++) {
+            let cartridgeID = row.cells[0].innerText.split(" - ")[0];
+            let cell1 = cartridgeID;
+            let cell2 = row.cells[1].innerText;
+            rawData.push(cell1 + "/" + cell2);
+        }
+
+        let rawTableInput = document.getElementById("raw_table");
+        rawTableInput.value = rawData.join(",");
+    }
+
+    function updateTable(searchText) {
+        // Получаем таблицу по ID
+        var table = document.getElementById("Carts_Table_Body");
+        let found = false;
+
+        var inputText = document.getElementById("textInput");
+
+        // Проходим по всем строкам таблицы, начиная со второй (первая - заголовок)
+        for (let i = 0, row; row = table.rows[i]; i++) {
+            // Получаем значение первой ячейки текущей строки
+            let cellText = row.cells[0].innerText;
+
+            // Проверяем, совпадает ли текст
+            if (cellText === searchText) {
+                // Увеличиваем значение во второй ячейке на 1
+                let countCell = row.cells[1];
+                countCell.innerText = parseInt(countCell.innerText) + 1;
+                found = true;
+                inputText.value = "";
+                updateRawTable();
+                break;
+            }
+        }
+
+        // Если совпадение не найдено, добавляем новую строку
+        if (!found) {
+            let newRow = table.insertRow();
+            let cell1 = newRow.insertCell(0);
+            let cell2 = newRow.insertCell(1);
+            let cell3 = newRow.insertCell(2);
+
+            cell1.innerHTML = searchText;
+            cell2.innerHTML = "1";
+            cell3.innerHTML = `
+                                            <button type="button" class="btn btn-delete" onclick="decrementCount(this)">-</button>
+                                            <button type="button" class="btn btn-save" onclick="incrementCount(this)">+</button>
+                                    `;
+            inputText.value = "";
+            updateRawTable();
+        }
+    }
+
+    document.getElementById("add_cartridge_btn").addEventListener("click", async function (event) {
+        event.preventDefault(); // Предотвращаем отправку формы
+
+        var select = document.getElementById("cartridges");
+        var selectedOption = select.options[select.selectedIndex];
+
+        updateTable(selectedOption.text);
+    });
+
     function decrementCount(button) {
         let row = button.closest('tr');
         let countCell = row.cells[1];

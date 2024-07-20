@@ -32,6 +32,7 @@ namespace Cart_Inventory.Pages
 
         public void OnGet()
         {
+            loadCartridges();
             LoadPage();
         }
 
@@ -41,7 +42,7 @@ namespace Cart_Inventory.Pages
             ViewData["TimeStamp"] = dateTime;
         }
 
-        //--------ТЕХНИЧЕСКИЕ БЛОКИ--------
+        //--------------------------------
 
         public class Return_Data
         {
@@ -65,7 +66,9 @@ namespace Cart_Inventory.Pages
             public string? Name { get; set; }
             public int Count { get; set; }
         }
-    
+
+        public List<string>? all_cartridges { get; set; } = new List<string>();
+
         //--------------------------------
 
         public IActionResult OnPostOnTextInputChanged([FromBody] InputModel data) //ОБРАБОТКА ПРИ ВВОДЕ В ТЕКСТОВЫЙ БЛОК
@@ -77,6 +80,30 @@ namespace Cart_Inventory.Pages
             var resultData = GetDataBasedOnInput(cartridge_name);
 
             return new JsonResult(resultData);
+        }
+
+        private void loadCartridges() // LOAD ALL CARTRIDGES AND MODULES
+        {
+            string sqlExpression = "SELECT id,model FROM cartridges";
+
+            using (var connection = new MySqlConnection(sql_connection()))
+            {
+                connection.Open();
+
+                using var command = new MySqlCommand(sqlExpression, connection);
+                //command.Parameters.AddWithValue("@printer", printer);
+
+                using var reader = command.ExecuteReader();
+                {
+                    if (reader.HasRows) // если есть данные
+                    {
+                        while (reader.Read())   // построчно считываем данные
+                        {
+                            all_cartridges.Add(reader.GetValue(0).ToString() + " - " + reader.GetString(1));
+                        }
+                    }
+                }
+            }
         }
 
         private List<Return_Data> GetDataBasedOnInput(string inputText) //ОБРАБОТКА ПРИ ВВОДЕ В ТЕКСТОВЫЙ БЛОК
@@ -125,6 +152,7 @@ namespace Cart_Inventory.Pages
                 Console.WriteLine(ex.ToString());
             }
             LoadPage();
+            loadCartridges();
             return Page();
         }
 
@@ -160,7 +188,7 @@ namespace Cart_Inventory.Pages
             }
             catch (Exception ex)
             {
-                return "0";
+                return ex.ToString();
             }
         }
     }

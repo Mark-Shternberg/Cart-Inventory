@@ -32,6 +32,7 @@ namespace Cart_Inventory.Pages
         public void OnGet()
         {
             loadInvents();
+            loadCartridges();
         }
 
         public class InputModelLoad
@@ -58,11 +59,39 @@ namespace Cart_Inventory.Pages
 
         public List<string>? all_invents { get; set; } = new List<string>();
 
+        public List<string>? all_cartridges { get; set; } = new List<string>();
+
         public List<main_table_model>? main_table { get; set; }
 
-        private void loadInvents() //ЗАГРУЗКА ВСЕХ МОДУЛЕЙ ПРИНТЕРОВ
+        private void loadInvents() // LOAD ALL INVENTARISATIONS
         {
             string sqlExpression = "SELECT id, date, invent_table FROM invent";
+
+            using (var connection = new MySqlConnection(sql_connection()))
+            {
+                connection.Open();
+
+                using var command = new MySqlCommand(sqlExpression, connection);
+                //command.Parameters.AddWithValue("@printer", printer);
+
+                using var reader = command.ExecuteReader();
+                {
+                    if (reader.HasRows)
+                    {
+                        while (reader.Read())
+                        {
+                            string table = "";
+                            if (reader.GetInt32(2) == 0) table = "Картриджи";
+                            else table = "Модули";
+                            all_invents.Add(reader.GetInt32(0) + " - " + reader.GetString(1) + " - " + table);
+                        }
+                    }
+                }
+            }
+        }
+        private void loadCartridges() // LOAD ALL CARTRIDGES AND MODULES
+        {
+            string sqlExpression = "SELECT id,model FROM cartridges";
 
             using (var connection = new MySqlConnection(sql_connection()))
             {
@@ -77,10 +106,7 @@ namespace Cart_Inventory.Pages
                     {
                         while (reader.Read())   // построчно считываем данные
                         {
-                            string table = "";
-                            if (reader.GetInt32(2) == 0) table = "Картриджи";
-                            else table = "Модули";
-                            all_invents.Add(reader.GetInt32(0) + " - " + reader.GetString(1) + " - " + table);
+                            all_cartridges.Add(reader.GetValue(0).ToString() + " - " + reader.GetString(1));
                         }
                     }
                 }
@@ -260,6 +286,7 @@ namespace Cart_Inventory.Pages
                 Console.WriteLine(ex.ToString());
             }
             loadInvents();
+            loadCartridges();
             return Page();
         }
 
@@ -298,6 +325,7 @@ namespace Cart_Inventory.Pages
                 Console.WriteLine(ex.ToString());
             }
             loadInvents();
+            loadCartridges();
             return Page();
         }
     }
