@@ -6,24 +6,25 @@
 
 <div style="text-align:center">
     <form asp-page-handler="DeleteInventorization" method="post" id="main_form">
-        Select inventory: 
+        Inventory: 
         <select id="all_invents" name="all_invents">
             @for (int i = Model.all_invents.Count-1; i>=0;i--)
             {
                 <option value="@Model.all_invents[i]">@Model.all_invents[i]</option>
             }
         </select>
+        <h4 id="invent_name" hidden></h4>
         <input hidden name="raw_table" type="text" id="raw_table" />
         <input hidden name="invent_id" type="text" id="invent_id" />
         @Html.AntiForgeryToken()
         <button type="button" class="btn btn-default" id="edit_invent">Edit</button>
         <button class="btn btn-delete" id="delete_invent">Delete</button>
-        <button type="button" class="btn btn-default" id="edit_cancel" style="visibility:hidden;">Cancel</button>
-        <button type="button" class="btn btn-save" id="save_invent" style="visibility:hidden;">Save</button>
+        <button type="button" class="btn btn-default" id="edit_cancel" hidden>Cancel</button>
+        <button type="button" class="btn btn-save" id="save_invent" hidden>Save</button>
     </form>
 </div>
 
-<div class="add-item-block" id="input_new_cartridge" style="visibility:hidden; margin-top: 20px;">
+<div class="add-item-block" id="input_new_cartridge" style="margin-top: 20px;" hidden>
     Add new cartridge/module barcode: <input type="text" id="textInput" oninput="onTextInputChanged()" />
 
     Or select manually:
@@ -38,7 +39,7 @@
     </button>
 </div>
 
-<table id="Invent_Table" class="table" style="visibility:hidden;">
+<table id="Invent_Table" class="table" hidden>
     <thead>
         <tr>
             <th>Name</th>
@@ -142,24 +143,23 @@
             if (response.ok) {
                 const data = await response.json();
 
+                document.getElementById("invent_name").textContent = invent_id;
+
                 // Очистка текущего содержимого таблицы
                 var tableBody = document.getElementById("Invent_Table_Body");
                 tableBody.innerHTML = "";
 
                 // ВКЛЮЧЕНИЕ и ВЫКЛЮЧЕНИЕ БЛОКОВ
-                var table = document.getElementById("Invent_Table");
-                table.style.visibility = "visible";
-                var button = document.getElementById("save_invent");
-                button.style.visibility = "visible";
-                var div = document.getElementById("input_new_cartridge");
-                div.style.visibility = "visible";
-                var cancel = document.getElementById("edit_cancel");
-                cancel.style.visibility = "visible";
+                document.getElementById("Invent_Table").hidden = false;
+                document.getElementById("save_invent").hidden = false;
+                document.getElementById("input_new_cartridge").hidden = false;
+                document.getElementById("edit_cancel").hidden = false;
 
-                var edit = document.getElementById("edit_invent");
-                edit.style.visibility = "hidden";
-                var delete_button = document.getElementById("delete_invent");
-                delete_button.style.visibility = "hidden";
+                document.getElementById("edit_invent").hidden = true;
+                document.getElementById("delete_invent").hidden = true;
+
+                document.getElementById("all_invents").hidden = true;
+                document.getElementById("invent_name").hidden = false;
 
                 // ЗАПИСЬ ID ИНВЕНТАРИЗАЦИИ В СКРЫТОЕ ПОЛЕ
                 var field = document.getElementById("invent_id");
@@ -262,19 +262,16 @@
         event.preventDefault();
 
         // ВЫКЛЮЧЕНИЕ и ВКЛЮЧЕНИЕ БЛОКОВ
-        var table = document.getElementById("Invent_Table");
-        table.style.visibility = "hidden";
-        var button = document.getElementById("save_invent");
-        button.style.visibility = "hidden";
-        var div = document.getElementById("input_new_cartridge");
-        div.style.visibility = "hidden";
-        var cancel = document.getElementById("edit_cancel");
-        cancel.style.visibility = "hidden";
+        document.getElementById("Invent_Table").hidden = true;
+        document.getElementById("save_invent").hidden = true;
+        document.getElementById("input_new_cartridge").hidden = true;
+        document.getElementById("edit_cancel").hidden = true;
 
-        var edit = document.getElementById("edit_invent");
-        edit.style.visibility = "visible";
-        var delete_button = document.getElementById("delete_invent");
-        delete_button.style.visibility = "visible";
+        document.getElementById("edit_invent").hidden = false;
+        document.getElementById("delete_invent").hidden = false;
+
+        document.getElementById("all_invents").hidden = false;
+        document.getElementById("invent_name").hidden = true;
     });
 
     document.getElementById("save_invent").addEventListener("click", async function (event) {
