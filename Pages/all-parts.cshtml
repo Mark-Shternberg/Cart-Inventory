@@ -6,12 +6,12 @@
 
 <div class="add-item-block" style="text-align: center;">
     <form asp-page-handler="Add_new_model" method="post" id="main_form">
-        <input name="name" type="text" placeholder="Model name" />
-        <input name="barcode" type="text" placeholder="Barcode" />
-        <input type="number" name="yellow_zone" placeholder="Yellow zone">
-        <button type="submit" class="btn btn-save">Add new model</button>
+        <input name="name" id="create-name" type="text" placeholder="Model name" />
+        <input name="barcode" id="create-barcode" type="text" placeholder="Barcode" />
+        <input type="number" id="create-yellowzone" min="0" oninput="validity.valid||(value='');" name="yellow_zone" placeholder="Yellow zone">
+        <button type="button" id="btn-save" class="btn btn-save">Add new model</button>
     </form>
-    <a>Name: Name of module, must not contain ',' or '/'</a> <br />
+    <a>Name: Name of module</a> <br />
     <a>Barcode: You can add several barcodes, saparated by ','</a> <br />
     <a>Yellow zone: The value below which the cartridge will be marked yellow</a>
 </div>
@@ -43,23 +43,28 @@
                     </td>
                     <td>
                         <a id="yellow_zone_old_@item.id">@item.yellow_zone</a>
-                        <input hidden type="number" min="0" name="yellow_zone" id="yellow_zone_new_@item.id" value="@item.yellow_zone">
+                        <input hidden type="number" min="0" oninput="validity.valid||(value='');" name="yellow_zone" id="yellow_zone_new_@item.id" value="@item.yellow_zone">
                     </td>
-                    <td style="display: flex">
-                        <button type="button" class="btn btn-edit" data-id="@item.id" style="margin-right: 10px;">Edit</button>
-                        <button hidden type="button" class="btn btn-default" data-id="@item.id" style="margin-right: 10px;">Cancel</button>
-                        @Html.AntiForgeryToken()
-                        <button hidden type="button" class="btn btn-save btn-save-edit" data-id="@item.id" style="margin-right: 10px;">Save</button>
-                        <form asp-page-handler="Delete_module" method="post" style="margin: 0;">
-                            <input hidden name="id" value="@item.id">
-                            <button type="submit" data-id="@item.id" class="btn btn-delete">Delete</button>
-                        </form>
+                    <td>
+                        <div style="display: flex">
+                            <button type="button" class="btn btn-edit" data-id="@item.id" style="margin-right: 10px;">Edit</button>
+                            <button hidden type="button" class="btn btn-default" data-id="@item.id" style="margin-right: 10px;">Cancel</button>
+                            @Html.AntiForgeryToken()
+                            <button hidden type="button" class="btn btn-save btn-save-edit" data-id="@item.id" style="margin-right: 10px;">Save</button>
+                            <form asp-page-handler="Delete_module" method="post" style="margin: 0;">
+                                <input hidden name="id" value="@item.id">
+                                <button type="submit" data-id="@item.id" class="btn btn-delete">Delete</button>
+                            </form>
+                        </div>
                     </td>
                 </tr>
             }
         }
     </tbody>
 </table>
+<div id="notification" class="notification">
+    <span id="notification-message"></span>
+</div>
 
 @section Scripts {
     <script>
@@ -93,7 +98,12 @@
                     let barcode = row.querySelector('#barcode_new_' + rowId).value;
                     let yellowZone = row.querySelector('#yellow_zone_new_' + rowId).value;
 
-                    let response = await await fetch('/all-parts?handler=Edit_module', {
+                    if (model === "" || barcode === "" || yellowZone === "") {
+                        showNotification('Error. Check fields', 2);
+                        return;
+                    }
+
+                    let response = await fetch('/all-parts?handler=Edit_module', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
@@ -108,6 +118,7 @@
                     });
 
                     if (response.ok) {
+                        showNotification('Editing completed successfully', 1);
                         row.querySelector('#model_old_' + rowId).hidden = false;
                         row.querySelector('#barcode_old_' + rowId).hidden = false;
                         row.querySelector('#yellow_zone_old_' + rowId).hidden = false;
@@ -125,7 +136,7 @@
                         row.querySelector('.btn-default[data-id="' + rowId + '"]').hidden = true;
                         row.querySelector('.btn-delete[data-id="' + rowId + '"]').hidden = false;
                     } else {
-                        alert('Error while saving changes.');
+                        showNotification('Error while saving changes.', 2);
                     }
                 });
             });
@@ -150,5 +161,145 @@
                 });
             });
         });
+
+        document.getElementById("btn-save").addEventListener("click", async function (event) {
+            event.preventDefault(); // Prevent form submission
+
+            let model = document.getElementById('create-name').value;
+            let barcode = document.getElementById('create-barcode').value;
+            let yellowZone = document.getElementById('create-yellowzone').value;
+
+            if (model === "" || barcode === "") {
+                showNotification('Error. Check fields', 2);
+                return;
+            }
+
+            if (yellowZone === "") yellowZone = "2";
+
+            let response = await fetch('/all-parts?handler=Add_new_model', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                },
+                body: JSON.stringify({
+                    name: model,
+                    barcode: barcode,
+                    yellow_zone: yellowZone
+                })
+            });
+
+            if (response.ok) {
+                let newModel = await response.json(); // Получаем данные новой модели в формате JSON
+
+                // Отображаем уведомление об успешном добавлении
+                showNotification('Add success', 1);
+
+                // Очищаем поля формы
+                document.getElementById('create-name').value = '';
+                document.getElementById('create-barcode').value = '';
+                document.getElementById('create-yellowzone').value = '';
+
+                // Добавляем новую строку в таблицу
+                addRowToTable(newModel);
+            } else {
+                showNotification('Error while adding.', 2);
+            }
+        });
+
+        function addRowToTable(json) {
+            const tableBody = document.querySelector("table tbody");
+            console.log(json.newModel.id);
+
+            // Создаем новую строку
+            let newRow = document.createElement('tr');
+            newRow.setAttribute('id', 'row_' + json.newModel.id); // Присваиваем уникальный ID строке
+
+            // Вставляем ячейки со значениями
+            newRow.innerHTML = `
+                <td>${json.newModel.id}</td>
+                <td>
+                <a id="model_old_${json.newModel.id}">${json.newModel.model}</a>
+                <input hidden name="model" id="model_new_${json.newModel.id}" value="${json.newModel.model}">
+                </td>
+                <td>
+                <a id="barcode_old_${json.newModel.id}">${json.newModel.barcode}</a>
+                <input hidden name="barcode" id="barcode_new_${json.newModel.id}" value="${json.newModel.barcode}">
+                </td>
+                <td>
+                <a id="yellow_zone_old_${json.newModel.id}">${json.newModel.yellow_zone}</a>
+                <input hidden type="number" min="0" oninput="validity.valid||(value='');" name="yellow_zone" id="yellow_zone_new_${json.newModel.id}" value="${json.newModel.yellow_zone}">
+                </td>
+                <td>
+                <div style="display: flex"style="display: flex">
+                <button type="button" class="btn btn-edit" data-id="${json.newModel.id}" style="margin-right: 10px;">Edit</button>
+                <button hidden type="button" class="btn btn-default" data-id="${json.newModel.id}" style="margin-right: 10px;">Cancel</button>
+                <button hidden type="button" class="btn btn-save btn-save-edit" data-id="${json.newModel.id}" style="margin-right: 10px;">Save</button>
+                <form asp-page-handler="Delete_module" method="post" style="margin: 0;">
+                <input hidden name="id" value="${json.newModel.id}">
+                <button type="submit" data-id="${json.newModel.id}" class="btn btn-delete">Delete</button>
+                </form>
+                </div>
+                </td>
+            `;
+
+            // Добавляем новую строку в конец таблицы
+            tableBody.appendChild(newRow);
+
+            // Присоединяем обработчики событий для кнопок "Edit", "Save" и "Delete" (если есть)
+            attachEventListenersToRow(newRow);
+        }
+
+        function attachEventListenersToRow(row) {
+            const editButton = row.querySelector('.btn-edit');
+            const saveButton = row.querySelector('.btn-save-edit');
+            const cancelButton = row.querySelector('.btn-default');
+
+            // Добавляем события для редактирования, сохранения и отмены
+            if (editButton) {
+                editButton.addEventListener('click', function () {
+                    let rowId = this.getAttribute('data-id');
+                    let row = document.getElementById('row_' + rowId);
+
+                    row.querySelector('#model_old_' + rowId).hidden = true;
+                    row.querySelector('#barcode_old_' + rowId).hidden = true;
+                    row.querySelector('#yellow_zone_old_' + rowId).hidden = true;
+
+                    row.querySelector('#model_new_' + rowId).hidden = false;
+                    row.querySelector('#barcode_new_' + rowId).hidden = false;
+                    row.querySelector('#yellow_zone_new_' + rowId).hidden = false;
+
+                    this.hidden = true;
+                    row.querySelector('.btn-save-edit[data-id="' + rowId + '"]').hidden = false;
+                    row.querySelector('.btn-default[data-id="' + rowId + '"]').hidden = false;
+                    row.querySelector('.btn-delete[data-id="' + rowId + '"]').hidden = true;
+                });
+            }
+
+            // Добавляем другие обработчики (save, cancel и т.д.)
+            // Аналогично тому, как это сделано в других частях скрипта
+        }
+
+        function showNotification(message, type) {
+            var notification = document.getElementById("notification");
+            var messageSpan = document.getElementById("notification-message");
+
+            messageSpan.innerText = message;
+
+            notification.classList.remove("notification-success", "notification-error");
+
+            if (type === 1) {
+                notification.classList.add("notification-success");
+            } else if (type === 2) {
+                notification.classList.add("notification-error");
+            }
+
+            notification.classList.add("show");
+
+            // Hide in 3s
+            setTimeout(function () {
+                notification.classList.remove("show");
+            }, 3000);
+        }
     </script>
 }

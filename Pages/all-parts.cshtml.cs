@@ -5,6 +5,7 @@ using Newtonsoft.Json;
 using System.Data;
 using System.Globalization;
 using System.Text.RegularExpressions;
+using static Cart_Inventory.Pages.all_cartsModel;
 using static Cart_Inventory.Pages.new_inventModel;
 using static System.Runtime.InteropServices.JavaScript.JSType;
 
@@ -84,68 +85,56 @@ namespace Cart_Inventory.Pages
             else main_table = null;
         }
 
-        public IActionResult OnPostAdd_new_model([FromForm] new_model model) //ОБРАБОТКА ПРИ ДОБАВЛЕНИИ МОДЕЛИ
+        //public IActionResult OnPostAdd_new_model([FromBody] new_model model) //ОБРАБОТКА ПРИ ДОБАВЛЕНИИ МОДЕЛИ
+        public IActionResult OnPostAdd_new_model([FromBody] new_model model) //ОБРАБОТКА ПРИ ДОБАВЛЕНИИ МОДЕЛИ
         {
             try
             {
-                string sqlExpression = "INSERT INTO cartridges (model, barcode, yellow_zone) VALUES (?model, ?barcode, ?yellow_zone)";
+                string sql = "INSERT INTO cartridges (model, barcode, yellow_zone) VALUES (@model, @barcode, @yellow_zone)";
 
-                using (var connection = new MySqlConnection(sql_connection()))
+                using var connection = new MySqlConnection(sql_connection());
+                connection.Open();
+
+                using var command = new MySqlCommand(sql, connection);
+
+                if (ValidateModel(model))
                 {
-                    connection.Open();
+                    command.Parameters.AddWithValue("@model", model.name?.Trim());
+                    command.Parameters.AddWithValue("@barcode", model.barcode?.Trim());
+                    command.Parameters.AddWithValue("@yellow_zone", model.yellow_zone?.Trim());
 
-                    using var command = new MySqlCommand(sqlExpression, connection);
+                    command.ExecuteNonQuery();
 
-                    command.Prepare();
+                    // Возвращаем новую запись для добавления в таблицу
+                    var lastId = command.LastInsertedId;
 
-                    int error = 0;
-                    //--------------------------------НАИМЕНОВАНИЕ КАРТРИДЖА------------------
-                    if (model.name != null && model.name != "" && ! model.name.Contains("/") && ! model.name.Contains(",")) 
+                    var newEntry = new main_table_model
                     {
-                        string model_name = model.name;
-                        if (model_name.EndsWith(" "))
-                        {
-                            model_name = model_name.TrimEnd(' '); // Удаление пробела в конце при его наличии
-                        }
-                        model_name = Regex.Replace(model_name, @"\s+", " "); // Замена множества пробелов на один
+                        id = lastId.ToString(),
+                        model = model.name,
+                        barcode = model.barcode,
+                        yellow_zone = model.yellow_zone
+                    };
 
-                        command.Parameters.AddWithValue("?model", model.name);
-                    }
-                    else error++;
-                    //---------------------------------------------------
-
-                    //--------------------------------ШТРИХ-КОД------------------
-                    if (model.barcode != null && model.barcode != "")
-                    {
-                        command.Parameters.AddWithValue("?barcode", model.barcode);
-                    }
-                    else error++;
-                    //---------------------------------------------------
-
-                    //--------------------ЖЁЛТАЯ ЗОНА----------------------
-                    if (!string.IsNullOrWhiteSpace(model.yellow_zone))
-                    {
-                        command.Parameters.AddWithValue("@yellow_zone", model.yellow_zone);
-                    }
-                    else
-                    {
-                        error++;
-                    }
-                    //---------------------------------------------------
-
-                    //---------ЗАПИСЬ И ВЫХОД------------
-                    if (error == 0)
-                    {
-                        command.ExecuteNonQuery();
-                    }
+                    LoadMainTable();
+                    return new JsonResult(new { success = true, newModel = newEntry });
                 }
+
+                return new JsonResult(new { success = false, message = "Validation failed" });
             }
             catch (Exception ex)
             {
-                Console.WriteLine(ex.ToString());
+                Console.WriteLine(ex);
+                return new JsonResult(new { success = false, message = ex.Message });
             }
-            LoadMainTable();
-            return Page();
+        }
+
+        private bool ValidateModel(new_model model)
+        {
+            return !string.IsNullOrWhiteSpace(model.name) &&
+                   !model.name.Contains("/") && !model.name.Contains(",") &&
+                   !string.IsNullOrWhiteSpace(model.barcode) &&
+                   !string.IsNullOrWhiteSpace(model.yellow_zone);
         }
 
         public IActionResult OnPostDelete_module([FromForm] delete_module model) //ОБРАБОТКА ПРИ УДАЛЕНИИ МОДЕЛИ

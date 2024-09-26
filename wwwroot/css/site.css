@@ -73,3 +73,34 @@ body {
     padding: 10px;
     margin-bottom: 30px;
 }
+
+.notification {
+    visibility: hidden;
+    min-width: 250px;
+    margin-left: -125px;
+    background-color: #333;
+    color: #fff;
+    text-align: center;
+    border-radius: 10px;
+    padding: 16px;
+    position: fixed;
+    z-index: 1;
+    left: 50%;
+    top: 50px;
+    font-size: 17px;
+    opacity: 0;
+    transition: opacity 0.6s, visibility 0.6s;
+}
+
+.notification-success {
+    background-color: #198754 !important;
+}
+
+.notification-error {
+    background-color: #dc3545 !important;
+}
+
+.notification.show {
+    visibility: visible;
+    opacity: 1;
+}
