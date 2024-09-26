@@ -53,7 +53,7 @@ namespace Cart_Inventory.Pages
                 "`model` LONGTEXT NOT NULL," +
                 "`barcode` LONGTEXT NOT NULL," +
                 "PRIMARY KEY (`id`)," +
-                "`yellow_zone` INT NOT NULL DEFAULT 2" +
+                "`yellow_zone` INT NOT NULL DEFAULT 2," +
                 "UNIQUE INDEX `id_UNIQUE` (`id` ASC) VISIBLE);", connection);
             using var create_invent = new MySqlCommand("CREATE TABLE `invent` (" +
                 "`id` INT NOT NULL AUTO_INCREMENT," +

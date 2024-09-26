@@ -295,6 +295,18 @@
             });
 
             if (response.ok) {
+                // ВЫКЛЮЧЕНИЕ и ВКЛЮЧЕНИЕ БЛОКОВ
+                document.getElementById("Invent_Table").hidden = true;
+                document.getElementById("save_invent").hidden = true;
+                document.getElementById("input_new_cartridge").hidden = true;
+                document.getElementById("edit_cancel").hidden = true;
+
+                document.getElementById("edit_invent").hidden = false;
+                document.getElementById("delete_invent").hidden = false;
+
+                document.getElementById("all_invents").hidden = false;
+                document.getElementById("invent_name").hidden = true;
+
                 updateRawTable();
             } else {
                 console.error("Failed to fetch data:", response.statusText);

@@ -164,7 +164,7 @@
             let printer_name = document.getElementById(`printer_new_${printer_id}`).value;
             let printer_cartridges = document.getElementById(`raw_table_${printer_id}`).value;
 
-            let response = await await fetch('/printers?handler=Edit_printer', {
+            let response = await fetch('/printers?handler=Edit_printer', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -178,6 +178,7 @@
             });
 
             if (response.ok) {
+                document.getElementById(`printer_old_${printer_id}`).innerText = document.getElementById(`printer_new_${printer_id}`).value;
                 document.getElementById(`printer_old_${printer_id}`).hidden = false;
                 document.getElementById(`printer_new_${printer_id}`).hidden = true;
                 document.querySelector(`.btn-edit[data-id="${printer_id}"]`).hidden = false;
