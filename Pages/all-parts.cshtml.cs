@@ -119,8 +119,7 @@ namespace Cart_Inventory.Pages
                     LoadMainTable();
                     return new JsonResult(new { success = true, newModel = newEntry });
                 }
-
-                return new JsonResult(new { success = false, message = "Validation failed" });
+                else return new JsonResult(new { success = false, message = "Validation of fields failed" });
             }
             catch (Exception ex)
             {

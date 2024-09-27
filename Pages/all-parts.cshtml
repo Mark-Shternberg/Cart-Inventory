@@ -118,7 +118,13 @@
                     });
 
                     if (response.ok) {
-                        showNotification('Editing completed successfully', 1);
+                        let newModel = await response.json();
+                        if (newModel.success === false) {
+                            showNotification('Error while editing. ' + newModel.message, 2);
+                            return;
+                        }
+                        else showNotification('Editing completed successfully', 1);
+
                         row.querySelector('#model_old_' + rowId).hidden = false;
                         row.querySelector('#barcode_old_' + rowId).hidden = false;
                         row.querySelector('#yellow_zone_old_' + rowId).hidden = false;
@@ -191,6 +197,11 @@
 
             if (response.ok) {
                 let newModel = await response.json(); // Получаем данные новой модели в формате JSON
+
+                if (newModel.success === false) {
+                    showNotification('Error while adding. ' + newModel.message, 2);
+                    return;
+                }
 
                 // Отображаем уведомление об успешном добавлении
                 showNotification('Add success', 1);

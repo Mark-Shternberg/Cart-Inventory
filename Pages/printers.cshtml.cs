@@ -161,7 +161,7 @@ namespace Cart_Inventory.Pages
             }
         }
 
-        public IActionResult OnPostAdd_new_printer([FromForm] new_printer model) //ОБРАБОТКА ПРИ ДОБАВЛЕНИИ МОДЕЛИ
+        public IActionResult OnPostAdd_new_printer([FromBody] new_printer model) //ОБРАБОТКА ПРИ ДОБАВЛЕНИИ МОДЕЛИ
         {
             try
             {
@@ -203,16 +203,38 @@ namespace Cart_Inventory.Pages
                     if (error == 0)
                     {
                         command.ExecuteNonQuery();
+
+                        // Возвращаем новую запись для добавления в таблицу
+                        var lastId = command.LastInsertedId;
+
+                        var idArray = model.raw_table.Split(',');
+
+                        // Проходим по каждому ID, вызываем get_cartridge и заменяем его
+                        for (int i = 0; i < idArray.Length; i++)
+                        {
+                            string id = idArray[i].Trim(); // Убираем возможные пробелы
+                            string cartridgeName = get_cartridge(id); // Вызов функции, которая возвращает имя картриджа
+                            idArray[i] = id + " - " + cartridgeName; // Заменяем ID на имя картриджа
+                        }
+
+                        var newEntry = new main_table_model
+                        {
+                            id = lastId.ToString(),
+                            name = model.name,
+                            cartridges = string.Join(",", idArray)
+                        };
+
+                        loadCartridges();
+                        return new JsonResult(new { success = true, newModel = newEntry, availableCartridges = all_cartridges });
                     }
+                    else return new JsonResult(new { success = false, message = "Wrong data input" });
                 }
             }
             catch (Exception ex)
             {
                 Console.WriteLine(ex.ToString());
+                return new JsonResult(new { success = false, message = ex.Message });
             }
-            LoadMainTable();
-            loadCartridges();
-            return Page();
         }
 
         public IActionResult OnPostDelete_printer([FromForm] delete_printer model) //ОБРАБОТКА ПРИ УДАЛЕНИИ ПРИНТЕРА
