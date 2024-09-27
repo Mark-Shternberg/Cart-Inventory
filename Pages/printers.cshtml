@@ -127,6 +127,7 @@
 </div>
 
 <script>
+    // LINK MODULE IN CREATION FORM
     document.getElementById("link_cartridge_btn").addEventListener("click", function (event) {
         event.preventDefault(); // Prevent form submission
 
@@ -160,6 +161,7 @@
         }
     });
 
+    // CREATE PRINTER
     document.getElementById("btn-create").addEventListener("click", async function (event) {
         event.preventDefault(); // Prevent form submission
 
@@ -354,6 +356,7 @@
         rawTableInput.value = rawData.join(",");
     }
 
+    // BUTTONS
     document.querySelectorAll('.btn-edit').forEach(button => {
         button.addEventListener('click', edit);
     });
@@ -369,7 +372,9 @@
     document.querySelectorAll('.link-cartridge-btn').forEach(button => {
         button.addEventListener('click', link);
     });
+    // ------
 
+    // EDIT
     function edit() {
         let id = this.getAttribute('data-id'); // `this` теперь правильно ссылается на кнопку
 
@@ -413,6 +418,7 @@
         updateRawTable_ForEdit(id);
     }
 
+    // SAVE
     async function save() {
         let printer_id = this.getAttribute('data-id');
 
@@ -470,11 +476,10 @@
         }
     }
 
+    // CANCEL
     function cancel() {
-        // Получаем идентификатор принтера из атрибута data-id кнопки
         const id = this.getAttribute('data-id');
 
-        // Получаем необходимые элементы
         const printerOld = document.getElementById(`printer_old_${id}`);
         const printerNew = document.getElementById(`printer_new_${id}`);
         const btnEdit = document.querySelector(`.btn-edit[data-id="${id}"]`);
@@ -486,27 +491,24 @@
         const linkedBody = document.getElementById(`linked_cartridges_table_body_${id}`);
         const linkedBodyOld = document.getElementById(`linked_cartridges_table_body_old_${id}`);
 
-        // Отображаем старое имя принтера и скрываем новое
         if (printerOld) printerOld.hidden = false;
         if (printerNew) printerNew.hidden = true;
 
-        // Управляем видимостью кнопок
         if (btnEdit) btnEdit.hidden = false;
         if (btnDefault) btnDefault.hidden = true;
         if (btnSave) btnSave.hidden = true;
-        this.hidden = true; // Скрываем кнопку "Cancel"
+        this.hidden = true;
         if (btnDelete) btnDelete.hidden = false;
 
-        // Управляем видимостью выпадающего списка и связанных картриджей
         if (selectCartridges) selectCartridges.hidden = true;
         if (linkCartridgeBtn) linkCartridgeBtn.hidden = true;
         if (linkedBody) linkedBody.hidden = true;
         if (linkedBodyOld) linkedBodyOld.hidden = false;
 
-        // Скрываем кнопки разъединения для принтера
         document.querySelectorAll(`.unlink-btn[data-printer-id="${id}"]`).forEach(btn => btn.hidden = true);
     }
 
+    // LINK
     function link() {
         const id = this.getAttribute('data-printer-id');
         const select = document.getElementById(`select_cartridges_${id}`);
@@ -533,6 +535,7 @@
         }
     }
 
+    // DELETE BUTTON
     function createDeleteButton(id, cartridgeName, newRow) {
         const deleteButton = document.createElement("button");
         deleteButton.textContent = "Unlink";
@@ -555,20 +558,21 @@
         return deleteButton;
     }
 
+    // UNLINK
     function unlink() {
         const id = this.getAttribute('data-printer-id');
         const cartridge = this.getAttribute('data-cartridge');
         const select = document.getElementById(`select_cartridges_${id}`);
 
-        // Добавляем картридж обратно в выпадающий список
+        // add module to select list
         const option = document.createElement("option");
         option.value = cartridge;
         option.text = cartridge;
-        select.add(option);
+        if (isValidIdNameFormat(option) === true) select.add(option);
 
         const tableBody = document.getElementById(`linked_cartridges_table_body_${id}`);
 
-        // Ищем строку с картриджем и удаляем её
+        // Find string with module and delete
         for (let i = 0; i < tableBody.rows.length; i++) {
             if (tableBody.rows[i].cells[0].innerText === cartridge) {
                 tableBody.deleteRow(i);
@@ -576,10 +580,17 @@
             }
         }
 
-        // Обновляем скрытую таблицу с картриджами
+        // update raw table
         updateRawTable_ForEdit(id);
+
+        // Check module is already deleted
+        function isValidIdNameFormat(str) {
+            const regex = /^\d+\s*-\s*(?!Deleted$).+$/;
+            return regex.test(str);
+        }
     }
 
+    // Notification
     function showNotification(message, type) {
         var notification = document.getElementById("notification");
         var messageSpan = document.getElementById("notification-message");

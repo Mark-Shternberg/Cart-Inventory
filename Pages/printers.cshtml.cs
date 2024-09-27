@@ -125,9 +125,9 @@ namespace Cart_Inventory.Pages
                             {
                                 return reader.GetString(0);
                             }
-                            return "No data";
+                            return "Deleted";
                         }
-                        else return "No data";
+                        else return "Deleted";
                     }
                 }
             }

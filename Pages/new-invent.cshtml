@@ -35,7 +35,6 @@
                             <button type="button" class="btn btn-default" id="add_cartridge_btn">
                                 Add
                             </button>
-                            @Html.AntiForgeryToken()
                             <br />
                             Or enter barcode:
                             <input type="text" id="textInput" placeholder="Barcode" oninput="onTextInputChanged()" />
@@ -60,6 +59,7 @@
         <button class="btn btn-save">Save</button>
     </form>
 </div>
+@Html.AntiForgeryToken()
 
 <script>
     async function onTextInputChanged() {
@@ -158,7 +158,7 @@
 
         updateTable(selectedOption.text);
     });
-
+    
     function decrementCount(button) {
         let row = button.closest('tr');
         let countCell = row.cells[1];
