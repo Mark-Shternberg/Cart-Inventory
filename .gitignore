@@ -364,3 +364,5 @@ FodyWeavers.xsd
 
 *.tar.gz
 *.rar
+*.bat
+*.ps1
