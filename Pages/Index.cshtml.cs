@@ -7,6 +7,7 @@ using Newtonsoft.Json;
 using System.Reflection.PortableExecutable;
 using static System.Runtime.InteropServices.JavaScript.JSType;
 using static Cart_Inventory.Pages.IndexModel;
+using System.Reflection;
 
 namespace Cart_Inventory.Pages
 {

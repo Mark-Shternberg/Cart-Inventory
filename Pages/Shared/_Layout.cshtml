@@ -1,4 +1,10 @@
-﻿<!DOCTYPE html>
+﻿@{
+    @using System.Reflection;
+    var version_full = Assembly.GetExecutingAssembly().GetName().Version;
+    string version = $"{version_full.Major}.{version_full.Minor}.{version_full.Build}";
+}
+
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8" />
@@ -45,8 +51,8 @@
     </div>
 
     <footer class="border-top footer text-muted">
-        <div class="container" style="text-align:center">
-            &copy; @DateTime.Now.ToString("yyyy") - <a href="https://medvedev-it.ru/" target="_blank">Medvedev IT</a> - <a href="https://github.com/Mark-Shternberg/Cart-Inventory/" target="_blank">GitHub Repository</a>
+        <div class="container" style="text-align:center; padding: 5px;">
+            &copy; @DateTime.Now.ToString("yyyy") - <a href="https://medvedev-it.ru/" target="_blank">Medvedev IT</a> - <a href="https://github.com/Mark-Shternberg/Cart-Inventory/" target="_blank">GitHub Repository</a><br /> Version: @version
         </div>
     </footer>
 
