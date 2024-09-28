@@ -114,7 +114,7 @@ namespace Cart_Inventory.Pages
             };
         }
 
-        public IActionResult OnPostSubmitInventorization([FromForm] InventoryFormModel model) //ЗАПИСЬ В БАЗУ ДАННЫХ
+        public IActionResult OnPostSubmitInventorization([FromBody] InventoryFormModel model) //ЗАПИСЬ В БАЗУ ДАННЫХ
         {
             try
             {
@@ -145,15 +145,14 @@ namespace Cart_Inventory.Pages
 
                     //---------ЗАПИСЬ И ВЫХОД------------
                     command.ExecuteNonQuery();
+                    return new JsonResult(new { success = true });
                 }
             }
             catch (Exception ex)
             {
                 Console.WriteLine(ex.ToString());
+                return new JsonResult(new { success = false, message = ex.ToString() });
             }
-            LoadPage();
-            loadCartridges();
-            return Page();
         }
 
         private string get_cartridge(string barcode) //ПОЛУЧЕНИЕ МОДЕЛИ КАРТРИДЖА ПО ШТРИХКОДУ

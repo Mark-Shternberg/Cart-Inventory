@@ -48,7 +48,7 @@ namespace Cart_Inventory.Pages
                 main_table.Columns.Add("Module");
                 main_table.Columns.Add("Printer");
 
-                for (int i = numberOfResults; i > numberOfResults - 8; i--)   // построчно считываем данные
+                for (int i = numberOfResults; i > numberOfResults - 8 && i > 0; i--)   // построчно считываем данные
                 {
 
                     string date = dt.Rows[i - 1][1].ToString();
