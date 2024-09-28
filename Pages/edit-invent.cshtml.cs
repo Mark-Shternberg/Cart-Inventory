@@ -210,39 +210,47 @@ namespace Cart_Inventory.Pages
             string sqlExpression = "SELECT invent FROM invent WHERE id=?id";
             string[] tmp = model.text.Split(" - ");
 
-            using (var connection = new MySqlConnection(sql_connection()))
+            try
             {
-                connection.Open();
-
-                using var command = new MySqlCommand(sqlExpression, connection);
-                command.Parameters.AddWithValue("?id", tmp[0]);
-
-                using var reader = command.ExecuteReader();
-                if (reader.HasRows)
+                using (var connection = new MySqlConnection(sql_connection()))
                 {
-                    DataTable dt = new DataTable();
-                    dt.Columns.Add("name");
-                    dt.Columns.Add("count");
+                    connection.Open();
 
-                    while (reader.Read())
+                    using var command = new MySqlCommand(sqlExpression, connection);
+                    command.Parameters.AddWithValue("?id", tmp[0]);
+
+                    using var reader = command.ExecuteReader();
+                    if (reader.HasRows)
                     {
-                        string raw_string = reader.GetString(0);
-                        string[] tmp1 = raw_string.Split(",");
-                        foreach (string s in tmp1)
+                        DataTable dt = new DataTable();
+                        dt.Columns.Add("name");
+                        dt.Columns.Add("count");
+
+                        while (reader.Read())
                         {
-                            string[] tmp2 = s.Split("/");
-                            dt.Rows.Add(tmp2[0] + " - " + get_cartridge_by_id(tmp2[0]), tmp2[1]);
+                            string raw_string = reader.GetString(0);
+                            string[] tmp1 = raw_string.Split(",");
+                            foreach (string s in tmp1)
+                            {
+                                string[] tmp2 = s.Split("/");
+                                dt.Rows.Add(tmp2[0] + " - " + get_cartridge_by_id(tmp2[0]), tmp2[1]);
+                            }
                         }
+
+                        string serializeObject = JsonConvert.SerializeObject(dt);
+                        var dataTableObjectInPOCO = JsonConvert.DeserializeObject<List<main_table_model>>(serializeObject);
+                        main_table = dataTableObjectInPOCO;
+
+                        return new JsonResult(new { success = true, table = main_table });
                     }
-
-                    string serializeObject = JsonConvert.SerializeObject(dt);
-                    var dataTableObjectInPOCO = JsonConvert.DeserializeObject<List<main_table_model>>(serializeObject);
-                    main_table = dataTableObjectInPOCO;
-
-                    return new JsonResult(main_table);
                 }
+                return new JsonResult(new { success = false, message = "No data found", table = new List<main_table_model>() });
             }
-            return new JsonResult(new List<main_table_model>());
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.ToString());
+                return new JsonResult(new { success = false, message = ex.ToString() });
+            }
         }
 
         public IActionResult OnPostSave_invent([FromBody] InputModelUpdate model) //ОБРАБОТКА ПРИ СОХРАНЕНИИ ИНВЕНТАРИЗАЦИИ
@@ -280,16 +288,16 @@ namespace Cart_Inventory.Pages
                     if (error == 0)
                     {
                         command.ExecuteNonQuery();
+                        return new JsonResult(new { success = true });
                     }
+                    else return new JsonResult(new { success = false, message = "Validation fails." });
                 }
             }
             catch (Exception ex)
             {
                 Console.WriteLine(ex.ToString());
+                return new JsonResult(new { success = false, message = ex.ToString() });
             }
-            loadInvents();
-            loadCartridges();
-            return Page();
         }
 
         public IActionResult OnPostDeleteInventorization([FromBody] InputModelDelete model) //ОБРАБОТКА ПРИ УДАЛЕНИИ ИНВЕНТАРИЗАЦИИ
