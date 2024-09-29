@@ -8,6 +8,31 @@ if [ $(id -u) -ne 0 ]; then
   exit 1
 fi
 
+if [[ " $@ " =~ " -update " ]]; then
+    if ! systemctl list-units --type=service --all  > /dev/null 2>&1 | grep -q "cart-inventory"; then
+        echo -e "${colRed}cart-inventory isn't installed. Run script without arguments, Exiting...${resetCol}"
+        exit 0
+    fi
+
+    if [[ ! -d /var/www/cartinventory ]]; then
+        echo -e "${colRed}cart-inventory isn't installed in default directory.\nUpdate program manually, Exiting...${resetCol}"
+        exit 0;
+    fi
+    systemctl stop cart-inventory.service
+    sleep 1
+
+    find "cartinventory" -type f ! -name "appsettings.json" -exec cp --parents {} "/var/www/" \;
+
+    systemctl start cart-inventory.service
+    if [ $? -eq 0 ]; then
+        echo -e "${colGreen}\tCart Inventory upgraded!${resetCol}"
+    else
+        echo -e "$colRed Upgrade error. $resetCol"
+        exit 0 
+    fi
+    exit 0 
+fi
+
 execute_by_distro() {
   if [ -f /etc/os-release ]; then
     . /etc/os-release
@@ -27,24 +52,23 @@ execute_by_distro() {
 
   case "$DISTRO" in
     ubuntu|debian)
-      apt-get -qqq update 
-      apt-get install mysql-server nginx jq -y
+      apt -qqq update 
+      apt install mysql-server nginx jq -y || { echo -e "${colRed}Error installing MySQL/NGINX! Exiting...${resetCol}"; exit 1; }
       ;;
     centos|rhel)
       yum update -q -y
-      yum install mysql-server nginx jq -y
+      yum install mysql-server nginx jq -y || { echo -e "${colRed}Error installing MySQL/NGINX! Exiting...${resetCol}"; exit 1; }
       ;;
     fedora)
       dnf update -q -y
-      dnf install mysql-server nginx jq -y
+      dnf install mysql-server nginx jq -y || { echo -e "${colRed}Error installing MySQL/NGINX! Exiting...${resetCol}"; exit 1; }
       ;;
     arch)
       pacman -Syu --noconfirm
-      pacman -S mariadb nginx jq --noconfirm
+      pacman -S mariadb nginx jq --noconfirm || { echo -e "${colRed}Error installing MariaDB/NGINX! Exiting...${resetCol}"; exit 1; }
       ;;
     *)
-      echo "Unknown or unsupported Linux distribution: $DISTRO\n"
-      echo "Exiting..."
+      echo -e "${colRed}Unknown or unsupported Linux distribution: $DISTRO\nExiting...${resetCol}"
       exit 1
       ;;
   esac
@@ -66,11 +90,15 @@ fi
 
 mv cartinventory /var/www/cartinventory
 cd /var/www/cartinventory
-wget https://dot.net/v1/dotnet-install.sh -O dotnet-install.sh
 chmod +x ./dotnet-install.sh
 ./dotnet-install.sh --channel 8.0
-rm dotnet-install.sh
-sleep 1
+if [ $? -eq 0 ]; then
+    echo -e "${colGreen}\tDotNET installed${resetCol}"
+else
+  echo -e "$colRed Error while installing DotNET. $resetCol"
+  exit 0 
+fi
+sleep 2
 mv /root/.dotnet /var/www/cartinventory/
 chown -R www-data:www-data /var/www/cartinventory
 chmod -R 744 /var/www/cartinventory
@@ -116,13 +144,16 @@ if command -v systemctl > /dev/null 2>&1; then
 User=www-data\n\
 WorkingDirectory=/var/www/cartinventory\n\
 ExecStart=/var/www/cartinventory/.dotnet/dotnet Cart_Inventory.dll\n\
-Restart=always\nRestartSec=5" > /etc/systemd/system/cart-inventory.service
+Restart=always\nRestartSec=5\n\
+[Install]\n\
+WantedBy=multi-user.target" > /etc/systemd/system/cart-inventory.service
 
   systemctl daemon-reload
   systemctl reload nginx
   systemctl start cart-inventory.service
 
   if [ $? -eq 0 ]; then
+    systemctl enable cart-inventory.service
     echo -e "${colGreen}\tGreat! Cart inventory service installed and started\n\
 \tNow you can go to: http://$server_name!${resetCol}"
   else
