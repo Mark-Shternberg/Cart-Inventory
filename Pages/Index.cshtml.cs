@@ -365,6 +365,10 @@ namespace Cart_Inventory.Pages
                 {
                     html += "<td style=\"min-width: 100px;border-top-style: solid;border-width: 4px;border-bottom-width: 1px; border-color: dimgray; border-bottom-color: #dee2e6;\">" + dt.Columns[i].ColumnName + "</td>";
                 }
+                else if (i <2)
+                {
+                    html += "<td onclick=\"sortTable(" + i + ")\" style=\"min-width: 100px; cursor: pointer;\">" + dt.Columns[i].ColumnName + "<span id=\"arrow_" + i + "\"></span></td>";
+                }
                 else html += "<td style=\"min-width: 100px;\">" + dt.Columns[i].ColumnName + "</td>";
             html += "</tr>";
 

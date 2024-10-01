@@ -104,3 +104,13 @@ body {
     visibility: visible;
     opacity: 1;
 }
+
+table a span {
+    font-size: 12px;
+    margin-left: 5px;
+    color: gray;
+}
+
+table a:hover span {
+    color: black;
+}
