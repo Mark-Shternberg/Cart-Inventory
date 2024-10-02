@@ -53,19 +53,19 @@
 <table class="table" id="printers_table">
     <thead>
         <tr>
-            <th>Id</th>
-            <th>Printer name</th>
+            <th onclick="sortTable(0)">Id <span id="arrow_0"></span></th>
+            <th onclick="sortTable(1)">Printer name <span id="arrow_1"></span></th>
             <th>Linked cartridges</th>
             <th></th>
         </tr>
     </thead>
-    <tbody>
+    <tbody id="printers_table_body">
         @if (Model.main_table != null)
         {
             @foreach (var printer in @Model.main_table!)
             {
                 <tr>
-                    <td>@printer.id</td>
+                    <td><a>@printer.id</a></td>
                     <td>
                         <a id="printer_old_@printer.id">@printer.name</a>
                         <input hidden name="model" id="printer_new_@printer.id" value="@printer.name">
@@ -611,5 +611,80 @@
         setTimeout(function () {
             notification.classList.remove("show");
         }, 3000);
+    }
+
+    // SORTING
+    function sortTable(n) {
+        var table, rows, switching, i, x, y, shouldSwitch, dir, switchCount = 0;
+        table = document.getElementById("printers_table");
+        switching = true;
+        dir = "asc"; // asc sort
+
+        // Drop arrows
+        resetArrows();
+
+        while (switching) {
+            switching = false;
+            rows = table.rows;
+
+            for (i = 1; i < (rows.length - 1); i++) {
+                shouldSwitch = false;
+                x = rows[i].getElementsByTagName("TD")[n].getElementsByTagName("a")[0].innerHTML.trim();
+                y = rows[i + 1].getElementsByTagName("TD")[n].getElementsByTagName("a")[0].innerHTML.trim();
+
+                // Check field is number
+                var xIsNumber = !isNaN(parseFloat(x)) && isFinite(x);
+                var yIsNumber = !isNaN(parseFloat(y)) && isFinite(y);
+
+                if (xIsNumber && yIsNumber) {
+                    // if numbers
+                    x = parseFloat(x);
+                    y = parseFloat(y);
+                } else {
+                    // if not numbers
+                    x = x.toLowerCase();
+                    y = y.toLowerCase();
+                }
+
+                if (dir === "asc") {
+                    if (x > y) {
+                        shouldSwitch = true;
+                        break;
+                    }
+                } else if (dir === "desc") {
+                    if (x < y) {
+                        shouldSwitch = true;
+                        break;
+                    }
+                }
+            }
+
+            if (shouldSwitch) {
+                rows[i].parentNode.insertBefore(rows[i + 1], rows[i]);
+                switching = true;
+                switchCount++;
+            } else {
+                if (switchCount === 0 && dir === "asc") {
+                    dir = "desc";
+                    switching = true;
+                }
+            }
+        }
+
+        // Adding arrow
+        var arrowSpan = document.getElementById("arrow_" + n);
+        if (dir === "asc") {
+            arrowSpan.innerHTML = " &#9660;";  // Arrow down (▼)
+        } else {
+            arrowSpan.innerHTML = " &#9650;";  // Arrow up(▲)
+        }
+    }
+
+    // Drop arrows
+    function resetArrows() {
+        var arrows = document.querySelectorAll("span[id^='arrow']");
+        arrows.forEach(function (arrow) {
+            arrow.innerHTML = "";  // Drop arrows
+        });
     }
 </script>
