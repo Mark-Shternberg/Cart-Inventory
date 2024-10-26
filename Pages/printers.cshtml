@@ -205,6 +205,7 @@
 
             // Добавляем новую строку в таблицу
             addRowToTable(newModel);
+            loadSorting();
         } else {
             showNotification('Error while adding.', 2);
         }
@@ -228,7 +229,7 @@
 
         // Вставляем ячейки со значениями
         newRow.innerHTML = `
-            <td>${json.newModel.id}</td>
+            <td><a>${json.newModel.id}</a></td>
             <td>
                 <a id="printer_old_${json.newModel.id}">${json.newModel.name}</a>
                 <input hidden name="model" id="printer_new_${json.newModel.id}" value="${json.newModel.name}">
@@ -239,7 +240,7 @@
                         <tbody id="linked_cartridges_table_body_old_${json.newModel.id}" style="border-style: hidden;">
                             ${cartridges.map(cart => `
                                 <tr>
-                                    <td>${cart}</td>
+                                    <td><a>${cart}</a></td>
                                     <td><button hidden type="button" class="btn btn-delete unlink-btn" data-printer-id="${json.newModel.id}" data-cartridge="${cart}">Unlink</button></td>
                                 </tr>
                             `).join('')}
@@ -247,7 +248,7 @@
                         <tbody hidden id="linked_cartridges_table_body_${json.newModel.id}">
                             ${cartridges.map(cart => `
                                 <tr>
-                                    <td>${cart}</td>
+                                    <td><a>${cart}</a></td>
                                     <td><button hidden type="button" class="btn btn-delete unlink-btn" data-printer-id="${json.newModel.id}" data-cartridge="${cart}">Unlink</button></td>
                                 </tr>
                             `).join('')}
@@ -416,6 +417,7 @@
         }
 
         updateRawTable_ForEdit(id);
+        loadSorting();
     }
 
     // SAVE
@@ -471,6 +473,7 @@
             document.querySelectorAll(`.unlink-btn[data-printer-id="${printer_id}"]`).forEach(btn => btn.hidden = true);
 
             copyTbody(`linked_cartridges_table_body_${printer_id}`, `linked_cartridges_table_body_old_${printer_id}`);
+            loadSorting();
         } else {
             alert('Error while saving changes.');
         }
@@ -614,7 +617,9 @@
     }
 
     // SORTING
-    document.addEventListener("DOMContentLoaded", function () {
+    document.addEventListener("DOMContentLoaded", loadSorting);
+
+    function loadSorting() {
         // Проверяем, есть ли данные о сортировке в localStorage
         let sortedColumn = localStorage.getItem('sortedColumn_printers');
         let sortDirection = localStorage.getItem('sortDirection_printers');
@@ -628,7 +633,7 @@
             sortDirection = 'asc';
             sortTable(parseInt(sortedColumn), 'saved', sortDirection);
         }
-    });
+    }
 
     function sortTable(n, type, savedDir) {
         var table, rows, switching, i, x, y, shouldSwitch, dir, switchCount = 0;
@@ -648,19 +653,20 @@
                 x = rows[i].getElementsByTagName("TD")[n].getElementsByTagName("a")[0].innerHTML.trim();
                 y = rows[i + 1].getElementsByTagName("TD")[n].getElementsByTagName("a")[0].innerHTML.trim();
 
-                // Check field is number
-                var xIsNumber = !isNaN(parseFloat(x)) && isFinite(x);
-                var yIsNumber = !isNaN(parseFloat(y)) && isFinite(y);
+                // Пробуем конвертировать в числа
+            let xNum = parseFloat(x);
+            let yNum = parseFloat(y);
+            let xIsNumber = !isNaN(xNum);
+            let yIsNumber = !isNaN(yNum);
 
-                if (xIsNumber && yIsNumber) {
-                    // if numbers
-                    x = parseFloat(x);
-                    y = parseFloat(y);
-                } else {
-                    // if not numbers
-                    x = x.toLowerCase();
-                    y = y.toLowerCase();
-                }
+            // Логика сортировки: сначала числа по возрастанию, потом строки
+            if (xIsNumber && yIsNumber) {
+                x = xNum;
+                y = yNum;
+            } else {
+                x = x.toLowerCase();
+                y = y.toLowerCase();
+            }
 
                 if (dir === "asc") {
                     if (x > y) {
