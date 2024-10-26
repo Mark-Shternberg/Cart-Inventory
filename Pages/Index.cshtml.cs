@@ -367,7 +367,7 @@ namespace Cart_Inventory.Pages
                 }
                 else if (i <2)
                 {
-                    html += "<td onclick=\"sortTable(" + i + ")\" style=\"min-width: 100px; cursor: pointer;\">" + dt.Columns[i].ColumnName + "<span id=\"arrow_" + i + "\"></span></td>";
+                    html += "<td onclick=\"sortTable(" + i + ", 'click')\" style=\"min-width: 100px; cursor: pointer;\">" + dt.Columns[i].ColumnName + "<span id=\"arrow_" + i + "\"></span></td>";
                 }
                 else html += "<td style=\"min-width: 100px;\">" + dt.Columns[i].ColumnName + "</td>";
             html += "</tr>";
@@ -403,7 +403,7 @@ namespace Cart_Inventory.Pages
                             else html += "<td style=\"min-width: 100px;background-color: darkseagreen;\">" + dt.Rows[i][j].ToString() + "</td>";
                         }
                     }
-                    else html += "<td style=\"min-width: 100px;\">" + dt.Rows[i][j].ToString() + "</td>";
+                    else html += "<td style=\"min-width: 100px;\"><a>" + dt.Rows[i][j].ToString() + "</a></td>";
                 }
 
                 html += "</tr>";

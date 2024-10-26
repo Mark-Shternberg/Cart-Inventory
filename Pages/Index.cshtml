@@ -16,11 +16,28 @@
 @Html.Raw(ViewData["DataTable"])
 
 <script>
-    function sortTable(n) {
+    // SORTING
+    document.addEventListener("DOMContentLoaded", function () {
+        // Проверяем, есть ли данные о сортировке в localStorage
+        let sortedColumn = localStorage.getItem('sortedColumn_index_table');
+        let sortDirection = localStorage.getItem('sortDirection_index_table');
+
+        // Если есть данные о сортировке, вызываем сортировку
+        if (sortedColumn !== null && sortDirection !== null) {
+            sortTable(parseInt(sortedColumn), 'saved', sortDirection);
+        }
+        else {
+            sortedColumn = '0';
+            sortDirection = 'asc';
+            sortTable(parseInt(sortedColumn), 'saved', sortDirection);
+        }
+    });
+
+    function sortTable(n, type, savedDir) {
         var table, rows, switching, i, x, y, shouldSwitch, dir, switchCount = 0;
         table = document.querySelector("table");
         switching = true;
-        dir = "asc"; // asc sort
+        dir = savedDir ? savedDir : "asc"; 
 
         // Drop arrows
         resetArrows();
@@ -31,16 +48,36 @@
 
             for (i = 1; i < (rows.length - 1); i++) {
                 shouldSwitch = false;
-                x = rows[i].getElementsByTagName("TD")[n];
-                y = rows[i + 1].getElementsByTagName("TD")[n];
+                x = rows[i].getElementsByTagName("TD")[n].getElementsByTagName("a")[0].innerHTML.trim();
+                y = rows[i + 1].getElementsByTagName("TD")[n].getElementsByTagName("a")[0].innerHTML.trim();
+
+                // Если сортируем второй столбец, берем только часть до запятой
+                if (n === 1) {
+                    x = x.includes(",") ? x.split(",")[0].trim() : x;
+                    y = y.includes(",") ? y.split(",")[0].trim() : y;
+                }
+
+                // Check field is number
+                var xIsNumber = !isNaN(parseFloat(x)) && isFinite(x);
+                var yIsNumber = !isNaN(parseFloat(y)) && isFinite(y);
+
+                if (xIsNumber && yIsNumber) {
+                    // if numbers
+                    x = parseFloat(x);
+                    y = parseFloat(y);
+                } else {
+                    // if not numbers
+                    x = x.toLowerCase();
+                    y = y.toLowerCase();
+                }
 
                 if (dir === "asc") {
-                    if (x.innerHTML.toLowerCase() > y.innerHTML.toLowerCase()) {
+                    if (x > y) {
                         shouldSwitch = true;
                         break;
                     }
                 } else if (dir === "desc") {
-                    if (x.innerHTML.toLowerCase() < y.innerHTML.toLowerCase()) {
+                    if (x < y) {
                         shouldSwitch = true;
                         break;
                     }
@@ -52,7 +89,7 @@
                 switching = true;
                 switchCount++;
             } else {
-                if (switchCount === 0 && dir === "asc") {
+                if (switchCount === 0 && dir === "asc" && type === 'click') {
                     dir = "desc";
                     switching = true;
                 }
@@ -66,6 +103,10 @@
         } else {
             arrowSpan.innerHTML = " &#9650;";  // Arrow up(▲)
         }
+
+        // Сохраняем сортировку в localStorage
+        localStorage.setItem('sortedColumn_index_table', n);
+        localStorage.setItem('sortDirection_index_table', dir);
     }
 
     // Drop arrows
