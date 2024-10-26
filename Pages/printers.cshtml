@@ -53,8 +53,8 @@
 <table class="table" id="printers_table">
     <thead>
         <tr>
-            <th onclick="sortTable(0)" style="cursor: pointer;">Id <span id="arrow_0"></span></th>
-            <th onclick="sortTable(1)" style="cursor: pointer;">Printer name <span id="arrow_1"></span></th>
+            <th onclick="sortTable(0, 'click')" style="cursor: pointer;">Id <span id="arrow_0"></span></th>
+            <th onclick="sortTable(1, 'click')" style="cursor: pointer;">Printer name <span id="arrow_1"></span></th>
             <th>Linked cartridges</th>
             <th></th>
         </tr>
@@ -616,16 +616,21 @@
     // SORTING
     document.addEventListener("DOMContentLoaded", function () {
         // Проверяем, есть ли данные о сортировке в localStorage
-        let sortedColumn = localStorage.getItem('sortedColumn');
-        let sortDirection = localStorage.getItem('sortDirection');
+        let sortedColumn = localStorage.getItem('sortedColumn_printers');
+        let sortDirection = localStorage.getItem('sortDirection_printers');
 
         // Если есть данные о сортировке, вызываем сортировку
         if (sortedColumn !== null && sortDirection !== null) {
-            sortTable(parseInt(sortedColumn), sortDirection);
+            sortTable(parseInt(sortedColumn), 'saved', sortDirection);
+        }
+        else {
+            sortedColumn = '0';
+            sortDirection = 'asc';
+            sortTable(parseInt(sortedColumn), 'saved', sortDirection);
         }
     });
 
-    function sortTable(n, savedDir = null) {
+    function sortTable(n, type, savedDir) {
         var table, rows, switching, i, x, y, shouldSwitch, dir, switchCount = 0;
         table = document.querySelector("#printers_table");
         switching = true;
@@ -675,7 +680,7 @@
                 switching = true;
                 switchCount++;
             } else {
-                if (switchCount === 0 && dir === "asc") {
+                if (switchCount === 0 && dir === "asc" && type === 'click') {
                     dir = "desc";
                     switching = true;
                 }
@@ -691,8 +696,8 @@
         }
 
         // Сохраняем сортировку в localStorage
-        localStorage.setItem('sortedColumn', n);
-        localStorage.setItem('sortDirection', dir);
+        localStorage.setItem('sortedColumn_printers', n);
+        localStorage.setItem('sortDirection_printers', dir);
     }
 
     function resetArrows() {

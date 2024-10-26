@@ -16,11 +16,11 @@
     <a>Yellow zone: The value below which the cartridge will be marked yellow</a>
 </div>
 
-<table class="table">
+<table class="table" id="parts_table">
     <thead>
         <tr>
-            <th>Id</th>
-            <th>Model</th>
+            <th onclick="sortTable(0, 'click')" style="cursor: pointer;">Id<span id="arrow_0"></span></th>
+            <th onclick="sortTable(1, 'click')" style="cursor: pointer;">Model<span id="arrow_1"></span></th>
             <th>Barcode</th>
             <th>Yellow zone</th>
             <th></th>
@@ -32,7 +32,7 @@
             @foreach (var item in Model.main_table)
             {
                 <tr id="row_@item.id">
-                    <td>@item.id</td>
+                    <td><a>@item.id</a></td>
                     <td>
                         <a id="model_old_@item.id">@item.model</a>
                         <input hidden name="model" id="model_new_@item.id" value="@item.model">
@@ -312,5 +312,100 @@
                 notification.classList.remove("show");
             }, 3000);
         }
+
+        // SORTING
+        document.addEventListener("DOMContentLoaded", function () {
+            // Проверяем, есть ли данные о сортировке в localStorage
+            let sortedColumn = localStorage.getItem('sortedColumn_parts_table');
+            let sortDirection = localStorage.getItem('sortDirection_parts_table');
+
+            // Если есть данные о сортировке, вызываем сортировку
+            if (sortedColumn !== null && sortDirection !== null) {
+                sortTable(parseInt(sortedColumn), 'saved', sortDirection);
+            }
+            else {
+                sortedColumn = '0';
+                sortDirection = 'asc';
+                sortTable(parseInt(sortedColumn), 'saved', sortDirection);
+            }
+        });
+
+        function sortTable(n, type, savedDir) {
+            var table, rows, switching, i, x, y, shouldSwitch, dir, switchCount = 0;
+            table = document.querySelector("#parts_table");
+            switching = true;
+            dir = savedDir ? savedDir : "asc"; // asc sort by default, or use saved direction
+
+            // Drop arrows
+            resetArrows();
+
+            while (switching) {
+                switching = false;
+                rows = table.rows;
+
+                for (i = 1; i < (rows.length - 1); i++) {
+                    shouldSwitch = false;
+                    x = rows[i].getElementsByTagName("TD")[n].getElementsByTagName("a")[0].innerHTML.trim();
+                    y = rows[i + 1].getElementsByTagName("TD")[n].getElementsByTagName("a")[0].innerHTML.trim();
+
+                    // Check field is number
+                    var xIsNumber = !isNaN(parseFloat(x)) && isFinite(x);
+                    var yIsNumber = !isNaN(parseFloat(y)) && isFinite(y);
+
+                    if (xIsNumber && yIsNumber) {
+                        // if numbers
+                        x = parseFloat(x);
+                        y = parseFloat(y);
+                    } else {
+                        // if not numbers
+                        x = x.toLowerCase();
+                        y = y.toLowerCase();
+                    }
+
+                    if (dir === "asc") {
+                        if (x > y) {
+                            shouldSwitch = true;
+                            break;
+                        }
+                    } else if (dir === "desc") {
+                        if (x < y) {
+                            shouldSwitch = true;
+                            break;
+                        }
+                    }
+                }
+
+                if (shouldSwitch) {
+                    rows[i].parentNode.insertBefore(rows[i + 1], rows[i]);
+                    switching = true;
+                    switchCount++;
+                } else {
+                    if (switchCount === 0 && dir === "asc" && type === 'click') {
+                        dir = "desc";
+                        switching = true;
+                    }
+                }
+            }
+
+            // Adding arrow
+            var arrowSpan = document.getElementById("arrow_" + n);
+            if (dir === "asc") {
+                arrowSpan.innerHTML = " &#9660;";  // Arrow down (▼)
+            } else {
+                arrowSpan.innerHTML = " &#9650;";  // Arrow up(▲)
+            }
+
+            // Сохраняем сортировку в localStorage
+            localStorage.setItem('sortedColumn_parts_table', n);
+            localStorage.setItem('sortDirection_parts_table', dir);
+        }
+
+        function resetArrows() {
+            var arrows = document.querySelectorAll("span[id^='arrow']");
+            arrows.forEach(function (arrow) {
+                arrow.innerHTML = "";  // Drop arrows
+            });
+        }
+        //-------------
     </script>
 }
